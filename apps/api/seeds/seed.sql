@@ -24,6 +24,15 @@ VALUES (
     strftime('%s', 'now') * 1000
 );
 
+-- Ensure teacher credentials are always corrected on reseed
+UPDATE users
+SET
+    password_hash = '$2b$10$/KOtt49Cx3hrvZKrbpqyB.opTodrsqIWfcTuUXXh7ta0cIhTCJShW',
+    display_name = 'Demo Teacher',
+    role = 'teacher',
+    updated_at = strftime('%s', 'now') * 1000
+WHERE email = 'teacher@demo.school';
+
 -- Sample topics
 INSERT INTO topics (id, tenant_id, name, description, color, created_at)
 VALUES 

@@ -19,6 +19,8 @@
     "db:migrate:staging": "wrangler d1 migrations apply trivia-db --env staging --remote",
     "db:migrate:prod": "wrangler d1 migrations apply trivia-db --env production --remote",
     "db:seed": "wrangler d1 execute trivia-db --local --file=./seeds/seed.sql",
+    "db:seed:staging": "wrangler d1 execute trivia-db-staging --remote --env staging --file=./seeds/seed.sql",
+    "db:seed:prod": "wrangler d1 execute trivia-db --remote --env production --file=./seeds/seed.sql",
     "clean": "rm -rf dist .wrangler .turbo"
   },
   "dependencies": {

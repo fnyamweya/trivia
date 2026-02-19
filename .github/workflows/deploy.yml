@@ -81,6 +81,11 @@ jobs:
           cd apps/api
           pnpm wrangler d1 migrations apply trivia-db-staging --remote --env staging
 
+      - name: Seed D1 data (staging)
+        run: |
+          cd apps/api
+          pnpm run db:seed:staging
+
       - name: Deploy Worker (staging)
         run: |
           cd apps/api
