@@ -72,6 +72,15 @@ interface RulesetConfig {
   streakMultiplier: number;
 }
 
+interface SessionBootstrapRow {
+  id: string;
+  tenant_id: string;
+  status: string;
+  current_question_index: number;
+  ruleset_id: string | null;
+  started_at: number | null;
+}
+
 interface AnswerRecord {
   studentId: string;
   teamId: string;
@@ -139,6 +148,12 @@ export class SessionDurableObject implements DurableObject {
   // ============================================================================
 
   private async handleWebSocketUpgrade(_request: Request): Promise<Response> {
+    const requestUrl = new URL(_request.url);
+    const sessionIdFromPath = this.extractSessionIdFromPath(requestUrl.pathname);
+    if (sessionIdFromPath) {
+      await this.ensureStateInitialized(sessionIdFromPath);
+    }
+
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
 
@@ -261,6 +276,17 @@ export class SessionDurableObject implements DurableObject {
   ): Promise<void> {
     // Load state if needed
     await this.loadState();
+
+    if (!this.storedState && message.token) {
+      try {
+        const payload = await verifyToken(this.env, message.token);
+        if (payload.sessionId) {
+          await this.ensureStateInitialized(payload.sessionId);
+        }
+      } catch {
+        // Token validity is handled below; ignore here.
+      }
+    }
 
     if (!this.storedState) {
       this.sendError(ws, 'SESSION_NOT_FOUND', 'Session not initialized');
@@ -1054,6 +1080,61 @@ export class SessionDurableObject implements DurableObject {
       this.storedState = stored;
       await this.loadTeams();
     }
+  }
+
+  private extractSessionIdFromPath(pathname: string): string | null {
+    const match = pathname.match(/\/sessions\/([^/]+)\/ws$/);
+    return match?.[1] ?? null;
+  }
+
+  private async ensureStateInitialized(sessionId: string): Promise<void> {
+    if (this.storedState) return;
+
+    const session = await this.env.DB.prepare(
+      `SELECT id, tenant_id, status, current_question_index, ruleset_id, started_at
+       FROM sessions
+       WHERE id = ? AND status NOT IN ('cancelled')`
+    ).bind(sessionId).first<SessionBootstrapRow>();
+
+    if (!session) return;
+
+    this.storedState = {
+      sessionId: session.id,
+      tenantId: session.tenant_id,
+      phase: session.status as SessionPhase,
+      position: TUG_START_POSITION,
+      questionIds: [],
+      currentQuestionIndex: session.current_question_index ?? -1,
+      teams: [],
+      streaks: {},
+      startedAt: session.started_at ?? undefined,
+      lastEventId: crypto.randomUUID(),
+      snapshotVersion: 1,
+    };
+
+    await this.loadTeams();
+
+    if (session.ruleset_id) {
+      const ruleset = await this.env.DB.prepare(
+        `SELECT question_count, time_limit_ms_per_question, points_per_correct,
+                points_for_speed, streak_bonus, streak_threshold, streak_multiplier
+         FROM rulesets WHERE id = ?`
+      ).bind(session.ruleset_id).first();
+
+      if (ruleset) {
+        this.ruleset = {
+          questionCount: ruleset.question_count as number,
+          timeLimitMsPerQuestion: ruleset.time_limit_ms_per_question as number,
+          pointsPerCorrect: ruleset.points_per_correct as number,
+          pointsForSpeed: (ruleset.points_for_speed as number) === 1,
+          streakBonus: (ruleset.streak_bonus as number) === 1,
+          streakThreshold: ruleset.streak_threshold as number,
+          streakMultiplier: ruleset.streak_multiplier as number,
+        };
+      }
+    }
+
+    await this.saveState();
   }
 
   private async saveState(): Promise<void> {
