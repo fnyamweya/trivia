@@ -24,8 +24,19 @@ api.interceptors.response.use(
     // Handle 401 - clear auth and redirect
     if (error.response?.status === 401) {
       localStorage.removeItem('accessToken');
-      localStorage.removeItem('user');
-      window.location.href = '/';
+      localStorage.removeItem('trivia-auth');
+
+      const currentPath = window.location.pathname;
+      const redirectTarget = currentPath.startsWith('/teacher') ? '/teacher/login' : '/join';
+      const redirectMarker = 'auth-redirect-in-progress';
+
+      if (
+        currentPath !== redirectTarget &&
+        sessionStorage.getItem(redirectMarker) !== '1'
+      ) {
+        sessionStorage.setItem(redirectMarker, '1');
+        window.location.replace(redirectTarget);
+      }
     }
     return Promise.reject(error);
   }

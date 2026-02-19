@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect } from 'react';
+import { Link } from '@tanstack/react-router';
 import { useGameStore } from '@/stores/game';
 import { useAuthStore } from '@/stores/auth';
 import { TugMeter } from '@/components/TugMeter';
@@ -26,6 +27,20 @@ function PlayPage() {
     };
   }, [sessionId, accessToken, connect, disconnect]);
 
+  if (!accessToken) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="card text-center">
+          <h2 className="text-xl font-bold mb-2">Session expired</h2>
+          <p className="text-gray-600 mb-4">Please rejoin the game with your code.</p>
+          <Link to="/join" className="btn-primary">
+            Go to Join Page
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (connectionStatus === 'connecting') {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -43,7 +58,7 @@ function PlayPage() {
         <div className="card text-center">
           <h2 className="text-xl font-bold text-red-600 mb-2">Connection Error</h2>
           <p className="text-gray-600 mb-4">Failed to connect to the game.</p>
-          <button onClick={() => connect(sessionId, accessToken!)} className="btn-primary">
+          <button onClick={() => connect(sessionId, accessToken)} className="btn-primary">
             Retry
           </button>
         </div>
