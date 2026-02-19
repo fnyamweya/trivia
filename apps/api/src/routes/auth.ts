@@ -69,7 +69,13 @@ authRoutes.post('/teacher/login', authRateLimiter, async (c) => {
     throw ApiError.unauthorized('Password login is not configured for this account');
   }
 
-  const valid = await verifyPassword(input.password, user.password_hash);
+  let valid = false;
+  try {
+    valid = await verifyPassword(input.password, user.password_hash);
+  } catch {
+    throw ApiError.unauthorized('Invalid credentials');
+  }
+
   if (!valid) {
     throw ApiError.unauthorized('Invalid credentials');
   }

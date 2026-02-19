@@ -26,6 +26,7 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
     environment:
       name: staging
       url: https://staging.trivia-tow.workers.dev
@@ -52,6 +53,10 @@ jobs:
             echo "::error::Missing CLOUDFLARE_ACCOUNT_ID. Add it to the GitHub 'staging' environment secrets.";
             exit 1;
           fi
+          if [ -z "$JWT_SECRET" ]; then
+            echo "::error::Missing JWT_SECRET. Add it to the GitHub 'staging' environment secrets.";
+            exit 1;
+          fi
           echo "Cloudflare secrets present for staging deployment"
 
       - name: Show effective deploy environment
@@ -63,6 +68,12 @@ jobs:
           echo "GitHub SHA: ${{ github.sha }}"
           echo "Cloudflare account ID configured: yes"
           echo "Cloudflare API token configured: yes"
+          echo "JWT secret configured: yes"
+
+      - name: Sync Worker JWT secret (staging)
+        run: |
+          cd apps/api
+          printf '%s' "$JWT_SECRET" | pnpm wrangler secret put JWT_SECRET --env staging
 
       - name: Build shared package
         run: pnpm --filter @trivia/shared build
@@ -99,6 +110,7 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
     environment:
       name: production
       url: https://trivia-tow.com
@@ -125,6 +137,10 @@ jobs:
             echo "::error::Missing CLOUDFLARE_ACCOUNT_ID. Add it to the GitHub 'production' environment secrets.";
             exit 1;
           fi
+          if [ -z "$JWT_SECRET" ]; then
+            echo "::error::Missing JWT_SECRET. Add it to the GitHub 'production' environment secrets.";
+            exit 1;
+          fi
           echo "Cloudflare secrets present for production deployment"
 
       - name: Show effective deploy environment
@@ -136,6 +152,12 @@ jobs:
           echo "GitHub SHA: ${{ github.sha }}"
           echo "Cloudflare account ID configured: yes"
           echo "Cloudflare API token configured: yes"
+          echo "JWT secret configured: yes"
+
+      - name: Sync Worker JWT secret (production)
+        run: |
+          cd apps/api
+          printf '%s' "$JWT_SECRET" | pnpm wrangler secret put JWT_SECRET --env production
 
       - name: Build shared package
         run: pnpm --filter @trivia/shared build
