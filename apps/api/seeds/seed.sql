@@ -2,7 +2,7 @@
 -- Run with: pnpm -C apps/api db:seed
 
 -- Default tenant
-INSERT INTO tenants (id, name, slug, created_at, updated_at)
+INSERT OR IGNORE INTO tenants (id, name, slug, created_at, updated_at)
 VALUES (
     '00000000-0000-0000-0000-000000000001',
     'Demo School',
@@ -12,7 +12,7 @@ VALUES (
 );
 
 -- Demo teacher (password: "password123" - bcrypt hash)
-INSERT INTO users (id, tenant_id, email, display_name, password_hash, role, created_at, updated_at)
+INSERT OR IGNORE INTO users (id, tenant_id, email, display_name, password_hash, role, created_at, updated_at)
 VALUES (
     '00000000-0000-0000-0000-000000000002',
     '00000000-0000-0000-0000-000000000001',
@@ -34,7 +34,7 @@ SET
 WHERE email = 'teacher@demo.school';
 
 -- Sample topics
-INSERT INTO topics (id, tenant_id, name, description, color, created_at)
+INSERT OR IGNORE INTO topics (id, tenant_id, name, description, color, created_at)
 VALUES 
     ('00000000-0000-0000-0000-000000000010', '00000000-0000-0000-0000-000000000001', 'Mathematics', 'Math questions', '#EF4444', strftime('%s', 'now') * 1000),
     ('00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000001', 'Science', 'Science questions', '#3B82F6', strftime('%s', 'now') * 1000),
@@ -42,7 +42,7 @@ VALUES
     ('00000000-0000-0000-0000-000000000013', '00000000-0000-0000-0000-000000000001', 'Geography', 'Geography questions', '#F59E0B', strftime('%s', 'now') * 1000);
 
 -- Sample tags
-INSERT INTO tags (id, tenant_id, name, created_at)
+INSERT OR IGNORE INTO tags (id, tenant_id, name, created_at)
 VALUES 
     ('00000000-0000-0000-0000-000000000020', '00000000-0000-0000-0000-000000000001', 'algebra', strftime('%s', 'now') * 1000),
     ('00000000-0000-0000-0000-000000000021', '00000000-0000-0000-0000-000000000001', 'geometry', strftime('%s', 'now') * 1000),
@@ -51,7 +51,7 @@ VALUES
     ('00000000-0000-0000-0000-000000000024', '00000000-0000-0000-0000-000000000001', 'world-war-2', strftime('%s', 'now') * 1000);
 
 -- Sample questions
-INSERT INTO questions (id, tenant_id, topic_id, type, difficulty, status, text, answers, explanation, time_limit_ms, points, created_by, created_at, updated_at)
+INSERT OR IGNORE INTO questions (id, tenant_id, topic_id, type, difficulty, status, text, answers, explanation, time_limit_ms, points, created_by, created_at, updated_at)
 VALUES 
     (
         '00000000-0000-0000-0000-000000000100',
@@ -151,7 +151,7 @@ VALUES
     );
 
 -- Link questions to tags
-INSERT INTO question_tags (question_id, tag_id)
+INSERT OR IGNORE INTO question_tags (question_id, tag_id)
 VALUES 
     ('00000000-0000-0000-0000-000000000100', '00000000-0000-0000-0000-000000000020'),
     ('00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000000020'),
@@ -160,7 +160,7 @@ VALUES
     ('00000000-0000-0000-0000-000000000104', '00000000-0000-0000-0000-000000000024');
 
 -- Default ruleset
-INSERT INTO rulesets (id, tenant_id, name, description, question_count, time_limit_ms_per_question, points_per_correct, created_at, updated_at)
+INSERT OR IGNORE INTO rulesets (id, tenant_id, name, description, question_count, time_limit_ms_per_question, points_per_correct, created_at, updated_at)
 VALUES (
     '00000000-0000-0000-0000-000000000030',
     '00000000-0000-0000-0000-000000000001',
@@ -174,7 +174,7 @@ VALUES (
 );
 
 -- Seeded game sessions with join codes
-INSERT INTO sessions (id, tenant_id, teacher_id, ruleset_id, name, join_code, status, current_question_index, total_questions, created_at)
+INSERT OR IGNORE INTO sessions (id, tenant_id, teacher_id, ruleset_id, name, join_code, status, current_question_index, total_questions, created_at)
 VALUES
         (
             '00000000-0000-0000-0000-000000000200',
@@ -202,7 +202,7 @@ VALUES
         );
 
 -- Teams for seeded sessions
-INSERT INTO teams (id, session_id, name, color, created_at)
+INSERT OR IGNORE INTO teams (id, session_id, name, color, created_at)
 VALUES
         ('00000000-0000-0000-0000-000000000210', '00000000-0000-0000-0000-000000000200', 'Red Rockets', '#EF4444', strftime('%s', 'now') * 1000),
         ('00000000-0000-0000-0000-000000000211', '00000000-0000-0000-0000-000000000200', 'Blue Blazers', '#3B82F6', strftime('%s', 'now') * 1000),
@@ -210,7 +210,7 @@ VALUES
         ('00000000-0000-0000-0000-000000000213', '00000000-0000-0000-0000-000000000201', 'Blue Blazers', '#3B82F6', strftime('%s', 'now') * 1000);
 
 -- Seed a couple of students in the first session
-INSERT INTO students (id, session_id, team_id, nickname, connection_status, joined_at, last_seen_at)
+INSERT OR IGNORE INTO students (id, session_id, team_id, nickname, connection_status, joined_at, last_seen_at)
 VALUES
         ('00000000-0000-0000-0000-000000000220', '00000000-0000-0000-0000-000000000200', '00000000-0000-0000-0000-000000000210', 'alice', 'connected', strftime('%s', 'now') * 1000, strftime('%s', 'now') * 1000),
         ('00000000-0000-0000-0000-000000000221', '00000000-0000-0000-0000-000000000200', '00000000-0000-0000-0000-000000000211', 'bob', 'connected', strftime('%s', 'now') * 1000, strftime('%s', 'now') * 1000);
