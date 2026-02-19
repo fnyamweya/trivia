@@ -1,0 +1,5 @@
+# Cloudflare Worker Development Variables
+# Copy this to .dev.vars and fill in values
+
+# JWT secret for signing tokens (minimum 32 characters)
+JWT_SECRET=your-development-secret-key-at-least-32-chars

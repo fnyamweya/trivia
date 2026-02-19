@@ -1,0 +1,138 @@
+{
+  /**
+   * Trivia Tug-of-War API Worker Configuration
+   * 
+   * References:
+   * - Cloudflare Workers Builds advanced setups: https://developers.cloudflare.com/workers/ci-cd/builds/advanced-setups/
+   * - Full-stack Worker with Assets: https://developers.cloudflare.com/workers/static-assets/
+   * - D1 bindings: https://developers.cloudflare.com/d1/worker-api/
+   * - Durable Objects: https://developers.cloudflare.com/durable-objects/
+   */
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "trivia-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-12-18",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Full-stack Worker: Serve SPA assets from the same Worker
+  // Build output from apps/web gets copied here during CI/CD
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    // SPA fallback: serve index.html for non-API routes
+    "not_found_handling": "single-page-application"
+  },
+
+  // D1 Database binding
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "trivia-db",
+      "database_id": "placeholder-replace-with-actual-id",
+      "migrations_dir": "./migrations"
+    }
+  ],
+
+  // Durable Objects for realtime game sessions
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "SESSION_DO",
+        "class_name": "SessionDurableObject"
+      }
+    ]
+  },
+
+  // DO migrations required for new classes
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_classes": ["SessionDurableObject"]
+    }
+  ],
+
+  // Queue for async analytics (optional, but recommended)
+  "queues": {
+    "producers": [
+      {
+        "binding": "ANALYTICS_QUEUE",
+        "queue": "trivia-analytics"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "trivia-analytics",
+        "max_batch_size": 100,
+        "max_batch_timeout": 30
+      }
+    ]
+  },
+
+  // Environment variables (non-secret)
+  "vars": {
+    "ENVIRONMENT": "development",
+    "LOG_LEVEL": "debug",
+    "API_VERSION": "v1"
+  },
+
+  // Observability
+  "observability": {
+    "enabled": true
+  },
+
+  // Local development
+  "dev": {
+    "port": 8787,
+    "local_protocol": "http"
+  },
+
+  // Staging environment
+  "env": {
+    "staging": {
+      "name": "trivia-api-staging",
+      "vars": {
+        "ENVIRONMENT": "staging",
+        "LOG_LEVEL": "info"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "trivia-db-staging",
+          "database_id": "placeholder-staging-id",
+          "migrations_dir": "./migrations"
+        }
+      ],
+      "queues": {
+        "producers": [
+          {
+            "binding": "ANALYTICS_QUEUE",
+            "queue": "trivia-analytics-staging"
+          }
+        ]
+      }
+    },
+    "production": {
+      "name": "trivia-api",
+      "vars": {
+        "ENVIRONMENT": "production",
+        "LOG_LEVEL": "warn"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "trivia-db",
+          "database_id": "placeholder-production-id",
+          "migrations_dir": "./migrations"
+        }
+      ],
+      "queues": {
+        "producers": [
+          {
+            "binding": "ANALYTICS_QUEUE",
+            "queue": "trivia-analytics"
+          }
+        ]
+      }
+    }
+  }
+}
