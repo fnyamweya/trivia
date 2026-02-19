@@ -92,7 +92,8 @@
       "name": "trivia-api-staging",
       "vars": {
         "ENVIRONMENT": "staging",
-        "LOG_LEVEL": "info"
+        "LOG_LEVEL": "info",
+        "API_VERSION": "v1"
       },
       "d1_databases": [
         {
@@ -100,6 +101,20 @@
           "database_name": "trivia-db-staging",
           "database_id": "placeholder-staging-id",
           "migrations_dir": "./migrations"
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "SESSION_DO",
+            "class_name": "SessionDurableObject"
+          }
+        ]
+      },
+      "migrations": [
+        {
+          "tag": "v1",
+          "new_classes": ["SessionDurableObject"]
         }
       ],
       "queues": {
@@ -115,7 +130,8 @@
       "name": "trivia-api",
       "vars": {
         "ENVIRONMENT": "production",
-        "LOG_LEVEL": "warn"
+        "LOG_LEVEL": "warn",
+        "API_VERSION": "v1"
       },
       "d1_databases": [
         {
@@ -123,6 +139,20 @@
           "database_name": "trivia-db",
           "database_id": "placeholder-production-id",
           "migrations_dir": "./migrations"
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "SESSION_DO",
+            "class_name": "SessionDurableObject"
+          }
+        ]
+      },
+      "migrations": [
+        {
+          "tag": "v1",
+          "new_classes": ["SessionDurableObject"]
         }
       ],
       "queues": {
