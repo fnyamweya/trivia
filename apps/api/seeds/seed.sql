@@ -11,15 +11,14 @@ VALUES (
     strftime('%s', 'now') * 1000
 );
 
--- Demo teacher (password: "password123" - hashed with bcrypt)
--- Note: In production, use proper password hashing
+-- Demo teacher (password: "password123" - bcrypt hash)
 INSERT INTO users (id, tenant_id, email, display_name, password_hash, role, created_at, updated_at)
 VALUES (
     '00000000-0000-0000-0000-000000000002',
     '00000000-0000-0000-0000-000000000001',
     'teacher@demo.school',
     'Demo Teacher',
-    '$2a$10$rQJK5kJzM5s/5K5X5X5X5uX5X5X5X5X5X5X5X5X5X5X5X5X5X5X5', -- placeholder
+    '$2b$10$/KOtt49Cx3hrvZKrbpqyB.opTodrsqIWfcTuUXXh7ta0cIhTCJShW',
     'teacher',
     strftime('%s', 'now') * 1000,
     strftime('%s', 'now') * 1000
@@ -164,3 +163,45 @@ VALUES (
     strftime('%s', 'now') * 1000,
     strftime('%s', 'now') * 1000
 );
+
+-- Seeded game sessions with join codes
+INSERT INTO sessions (id, tenant_id, teacher_id, ruleset_id, name, join_code, status, current_question_index, total_questions, created_at)
+VALUES
+        (
+            '00000000-0000-0000-0000-000000000200',
+            '00000000-0000-0000-0000-000000000001',
+            '00000000-0000-0000-0000-000000000002',
+            '00000000-0000-0000-0000-000000000030',
+            'Math Warmup',
+            'MATH01',
+            'lobby',
+            -1,
+            10,
+            strftime('%s', 'now') * 1000
+        ),
+        (
+            '00000000-0000-0000-0000-000000000201',
+            '00000000-0000-0000-0000-000000000001',
+            '00000000-0000-0000-0000-000000000002',
+            '00000000-0000-0000-0000-000000000030',
+            'Science Sprint',
+            'SCI123',
+            'lobby',
+            -1,
+            10,
+            strftime('%s', 'now') * 1000
+        );
+
+-- Teams for seeded sessions
+INSERT INTO teams (id, session_id, name, color, created_at)
+VALUES
+        ('00000000-0000-0000-0000-000000000210', '00000000-0000-0000-0000-000000000200', 'Red Rockets', '#EF4444', strftime('%s', 'now') * 1000),
+        ('00000000-0000-0000-0000-000000000211', '00000000-0000-0000-0000-000000000200', 'Blue Blazers', '#3B82F6', strftime('%s', 'now') * 1000),
+        ('00000000-0000-0000-0000-000000000212', '00000000-0000-0000-0000-000000000201', 'Red Rockets', '#EF4444', strftime('%s', 'now') * 1000),
+        ('00000000-0000-0000-0000-000000000213', '00000000-0000-0000-0000-000000000201', 'Blue Blazers', '#3B82F6', strftime('%s', 'now') * 1000);
+
+-- Seed a couple of students in the first session
+INSERT INTO students (id, session_id, team_id, nickname, connection_status, joined_at, last_seen_at)
+VALUES
+        ('00000000-0000-0000-0000-000000000220', '00000000-0000-0000-0000-000000000200', '00000000-0000-0000-0000-000000000210', 'alice', 'connected', strftime('%s', 'now') * 1000, strftime('%s', 'now') * 1000),
+        ('00000000-0000-0000-0000-000000000221', '00000000-0000-0000-0000-000000000200', '00000000-0000-0000-0000-000000000211', 'bob', 'connected', strftime('%s', 'now') * 1000, strftime('%s', 'now') * 1000);

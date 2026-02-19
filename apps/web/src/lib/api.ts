@@ -33,11 +33,11 @@ api.interceptors.response.use(
 
 // Type-safe API methods
 export const authApi = {
-  teacherLogin: (email: string) =>
-    api.post<{ token: string; user: any }>('/auth/teacher/login', { email }),
+  teacherLogin: (email: string, password: string) =>
+    api.post<{ success: boolean; data: { accessToken: string; user: any } }>('/auth/teacher/login', { email, password }),
 
   studentJoin: (joinCode: string, nickname: string) =>
-    api.post<{ token: string; session: any; student: any; team: any }>(
+    api.post<{ success: boolean; data: { accessToken: string; session: any; student: any } }>(
       '/auth/student/join',
       { joinCode, nickname }
     ),

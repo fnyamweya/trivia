@@ -11,6 +11,7 @@ function TeacherLoginPage() {
   const navigate = useNavigate();
   const setTeacherAuth = useAuthStore((state) => state.setTeacherAuth);
   const [email, setEmail] = useState('teacher@demo.school');
+  const [password, setPassword] = useState('password123');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -20,8 +21,8 @@ function TeacherLoginPage() {
     setLoading(true);
 
     try {
-      const response = await api.post('/auth/teacher/login', { email });
-      setTeacherAuth(response.data);
+      const response = await api.post('/auth/teacher/login', { email, password });
+      setTeacherAuth(response.data.data);
       navigate({ to: '/teacher/dashboard' });
     } catch (err: any) {
       setError(err.response?.data?.error?.message || 'Failed to login');
@@ -53,8 +54,24 @@ function TeacherLoginPage() {
               />
             </div>
 
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                className="input"
+                required
+                minLength={8}
+              />
+            </div>
+
             <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-700">
-              <strong>Demo Mode:</strong> Use <code>teacher@demo.school</code> to login.
+              <strong>Seeded account:</strong> <code>teacher@demo.school</code> / <code>password123</code>
             </div>
 
             {error && (

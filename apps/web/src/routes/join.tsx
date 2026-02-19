@@ -26,8 +26,8 @@ function JoinPage() {
         nickname,
       });
 
-      setStudentAuth(response.data);
-      navigate({ to: '/play/$sessionId', params: { sessionId: response.data.session.id } });
+      setStudentAuth(response.data.data);
+      navigate({ to: '/play/$sessionId', params: { sessionId: response.data.data.session.id } });
     } catch (err: any) {
       setError(err.response?.data?.error?.message || 'Failed to join game');
     } finally {

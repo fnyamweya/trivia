@@ -3,9 +3,10 @@ import { useAuthStore } from '@/stores/auth';
 
 export function Lobby() {
   const { teams, students, phase } = useGameStore();
-  const { studentSession, user } = useAuthStore();
+  const { user } = useAuthStore();
 
-  const myTeam = studentSession?.team;
+  const myTeamMembership = students.find((student) => student.id === user?.id);
+  const myTeam = teams.find((team) => team.id === myTeamMembership?.teamId);
 
   return (
     <div className="max-w-2xl mx-auto text-center">

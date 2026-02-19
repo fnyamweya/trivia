@@ -21,7 +21,7 @@ export const nicknameSchema = z.string().min(2).max(20).regex(/^[a-zA-Z0-9_-]+$/
 
 export const teacherLoginSchema = z.object({
   email: emailSchema,
-  password: z.string().min(8).max(100).optional(), // Optional for passwordless
+  password: z.string().min(8).max(100),
 });
 
 export const studentJoinSchema = z.object({

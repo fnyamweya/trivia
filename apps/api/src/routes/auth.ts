@@ -14,6 +14,7 @@ import { generateAccessToken } from '../auth/jwt.js';
 import { queryOne, execute } from '../db/helpers.js';
 import { ApiError } from '../observability/error-handler.js';
 import { createRateLimiter } from '../auth/rate-limiter.js';
+import { verifyPassword } from '../auth/password.js';
 
 export const authRoutes = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -46,7 +47,7 @@ interface StudentRow {
 
 /**
  * POST /v1/auth/teacher/login
- * Teacher login (passwordless for demo, can extend to password-based)
+ * Teacher login (email + password)
  */
 authRoutes.post('/teacher/login', authRateLimiter, async (c) => {
   const body = await c.req.json();
@@ -64,12 +65,14 @@ authRoutes.post('/teacher/login', authRateLimiter, async (c) => {
     throw ApiError.unauthorized('Invalid credentials');
   }
 
-  // For demo: skip password verification
-  // In production: verify password hash
-  // if (input.password && user.password_hash) {
-  //   const valid = await verifyPassword(input.password, user.password_hash);
-  //   if (!valid) throw ApiError.unauthorized('Invalid credentials');
-  // }
+  if (!user.password_hash) {
+    throw ApiError.unauthorized('Password login is not configured for this account');
+  }
+
+  const valid = await verifyPassword(input.password, user.password_hash);
+  if (!valid) {
+    throw ApiError.unauthorized('Invalid credentials');
+  }
 
   // Update last login
   await execute(

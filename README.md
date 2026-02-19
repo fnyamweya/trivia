@@ -94,10 +94,10 @@ pnpm install
 pnpm --filter @trivia/shared build
 
 # Start API (runs D1 locally + Worker)
-pnpm --filter @trivia-tow/api dev
+pnpm --filter @trivia/api dev
 
 # Start web app (in another terminal)
-pnpm --filter @trivia-tow/web dev
+pnpm --filter @trivia/web dev
 ```
 
 The web app will be available at `http://localhost:5173` with the API proxied to port 8787.
@@ -107,11 +107,20 @@ The web app will be available at `http://localhost:5173` with the API proxied to
 ```bash
 # Create local D1 database
 cd apps/api
-pnpm wrangler d1 migrations apply trivia-tow-db --local
+pnpm wrangler d1 migrations apply trivia-db --local
 
 # Seed demo data
-pnpm wrangler d1 execute trivia-tow-db --local --file=seeds/seed.sql
+pnpm wrangler d1 execute trivia-db --local --file=seeds/seed.sql
 ```
+
+### Seeded Credentials & Game Codes
+
+- Teacher login:
+  - Email: `teacher@demo.school`
+  - Password: `password123`
+- Seeded session join codes:
+  - `MATH01` (Math Warmup)
+  - `SCI123` (Science Sprint)
 
 ### Environment Variables
 
@@ -162,26 +171,28 @@ type ServerMessage =
 ## API Endpoints
 
 ### Auth
-- `POST /v1/auth/teacher/login` - Teacher email-based login
+- `POST /v1/auth/teacher/login` - Teacher email/password login
 - `POST /v1/auth/student/join` - Student joins with code + nickname
 
 ### Sessions (Teacher only)
-- `GET /v1/sessions` - List teacher's sessions
 - `POST /v1/sessions` - Create new session
 - `GET /v1/sessions/:id` - Get session details
-- `PATCH /v1/sessions/:id` - Update session status
+- `POST /v1/sessions/:id/start` - Start session
+- `POST /v1/sessions/:id/end` - End session
+- `GET /v1/sessions/:id/roster` - Session roster
 - `GET /v1/sessions/:id/ws` - WebSocket upgrade
 
 ### Questions (Teacher only)
 - `GET /v1/questions` - List questions with cursor pagination
 - `POST /v1/questions` - Create question
-- `PUT /v1/questions/:id` - Update question
-- `DELETE /v1/questions/:id` - Soft delete question
+- `PATCH /v1/questions/:id` - Update question
+- `POST /v1/questions/:id/publish` - Publish question
+- `POST /v1/questions/:id/retire` - Retire question
 
 ### Reports
 - `GET /v1/reports/teacher/recent` - Recent sessions for teacher
 - `GET /v1/reports/sessions/:id/summary` - Session summary
-- `GET /v1/reports/sessions/:id/leaderboard` - Player rankings
+- `GET /v1/reports/sessions/:id/questions` - Question-level breakdown
 
 ## Deployment
 
@@ -209,7 +220,7 @@ pnpm wrangler deploy
 
 The Worker needs these bindings configured in `wrangler.jsonc`:
 
-- **D1 Database**: `trivia-tow-db`
+- **D1 Database**: `trivia-db`
 - **Durable Object**: `SESSION_DO`
 - **Queue**: `ANALYTICS_QUEUE` (optional)
 

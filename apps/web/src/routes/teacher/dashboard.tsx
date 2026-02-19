@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useAuthStore } from '@/stores/auth';
 import { api } from '@/lib/api';
 
@@ -11,22 +12,23 @@ function TeacherDashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, logout } = useAuthStore();
+  const [sessionName, setSessionName] = useState(`Game ${new Date().toLocaleString()}`);
 
   const { data: recentSessions, isLoading } = useQuery({
     queryKey: ['teacher', 'sessions'],
     queryFn: async () => {
       const res = await api.get('/reports/teacher/recent');
-      return res.data;
+      return res.data.data;
     },
     enabled: !!user,
   });
 
   const createSessionMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (name: string) => {
       const res = await api.post('/sessions', {
-        name: `Game ${new Date().toLocaleString()}`,
+        name,
       });
-      return res.data;
+      return res.data.data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['teacher', 'sessions'] });
@@ -65,14 +67,34 @@ function TeacherDashboard() {
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Quick Actions */}
-        <div className="mb-8">
-          <button
-            onClick={() => createSessionMutation.mutate()}
-            disabled={createSessionMutation.isPending}
-            className="btn-primary text-lg px-8 py-3"
-          >
-            {createSessionMutation.isPending ? 'Creating...' : '+ New Game'}
-          </button>
+        <div className="card mb-8">
+          <h2 className="text-xl font-semibold mb-4">Create New Game</h2>
+          <div className="flex flex-col gap-4 md:flex-row md:items-end">
+            <div className="flex-1">
+              <label htmlFor="sessionName" className="block text-sm font-medium text-gray-700 mb-1">
+                Game Name
+              </label>
+              <input
+                id="sessionName"
+                type="text"
+                className="input"
+                value={sessionName}
+                onChange={(e) => setSessionName(e.target.value)}
+                placeholder="Enter a game name"
+                maxLength={100}
+              />
+            </div>
+            <button
+              onClick={() => createSessionMutation.mutate(sessionName.trim() || `Game ${new Date().toLocaleString()}`)}
+              disabled={createSessionMutation.isPending}
+              className="btn-primary text-lg px-8 py-3"
+            >
+              {createSessionMutation.isPending ? 'Creating...' : '+ Create Game'}
+            </button>
+          </div>
+          <p className="mt-3 text-sm text-gray-500">
+            After creation, you will be taken to the live session control room with shareable join code.
+          </p>
         </div>
 
         {/* Recent Sessions */}

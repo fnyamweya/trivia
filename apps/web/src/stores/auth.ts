@@ -10,8 +10,8 @@ interface User {
 
 interface StudentSession {
   id: string;
-  joinCode: string;
-  team: { id: string; name: string };
+  name: string;
+  status: string;
 }
 
 interface AuthState {
@@ -19,8 +19,8 @@ interface AuthState {
   accessToken: string | null;
   studentSession: StudentSession | null;
 
-  setTeacherAuth: (data: { token: string; user: any }) => void;
-  setStudentAuth: (data: { token: string; session: any; student: any; team: any }) => void;
+  setTeacherAuth: (data: { accessToken: string; user: { id: string; email: string; displayName: string } }) => void;
+  setStudentAuth: (data: { accessToken: string; session: { id: string; name: string; status: string }; student: { id: string; nickname: string } }) => void;
   logout: () => void;
 }
 
@@ -39,10 +39,10 @@ export const useAuthStore = create<AuthState>()(
             displayName: data.user.displayName,
             role: 'teacher',
           },
-          accessToken: data.token,
+          accessToken: data.accessToken,
           studentSession: null,
         });
-        localStorage.setItem('accessToken', data.token);
+        localStorage.setItem('accessToken', data.accessToken);
       },
 
       setStudentAuth: (data) => {
@@ -52,14 +52,14 @@ export const useAuthStore = create<AuthState>()(
             displayName: data.student.nickname,
             role: 'student',
           },
-          accessToken: data.token,
+          accessToken: data.accessToken,
           studentSession: {
             id: data.session.id,
-            joinCode: data.session.joinCode,
-            team: data.team,
+            name: data.session.name,
+            status: data.session.status,
           },
         });
-        localStorage.setItem('accessToken', data.token);
+        localStorage.setItem('accessToken', data.accessToken);
       },
 
       logout: () => {

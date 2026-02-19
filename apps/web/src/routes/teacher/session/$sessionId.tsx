@@ -110,25 +110,13 @@ function TeacherSessionPage() {
   // Session control mutations
   const startGameMutation = useMutation({
     mutationFn: async () => {
-      await api.patch(`/sessions/${sessionId}`, { status: 'playing' });
-    },
-  });
-
-  const pauseGameMutation = useMutation({
-    mutationFn: async () => {
-      await api.patch(`/sessions/${sessionId}`, { status: 'paused' });
-    },
-  });
-
-  const resumeGameMutation = useMutation({
-    mutationFn: async () => {
-      await api.patch(`/sessions/${sessionId}`, { status: 'playing' });
+      await api.post(`/sessions/${sessionId}/start`);
     },
   });
 
   const endGameMutation = useMutation({
     mutationFn: async () => {
-      await api.patch(`/sessions/${sessionId}`, { status: 'completed' });
+      await api.post(`/sessions/${sessionId}/end`);
     },
     onSuccess: () => {
       navigate({ to: '/teacher/session/$sessionId/report', params: { sessionId } });
@@ -193,13 +181,6 @@ function TeacherSessionPage() {
             {(wsState.phase === 'active_question' || wsState.phase === 'reveal') && (
               <>
                 <button
-                  onClick={() => pauseGameMutation.mutate()}
-                  disabled={pauseGameMutation.isPending}
-                  className="btn-secondary"
-                >
-                  ⏸️ Pause
-                </button>
-                <button
                   onClick={() => endGameMutation.mutate()}
                   disabled={endGameMutation.isPending}
                   className="btn-danger"
@@ -209,22 +190,13 @@ function TeacherSessionPage() {
               </>
             )}
             {wsState.phase === 'paused' && (
-              <>
-                <button
-                  onClick={() => resumeGameMutation.mutate()}
-                  disabled={resumeGameMutation.isPending}
-                  className="btn-primary"
-                >
-                  ▶️ Resume
-                </button>
-                <button
-                  onClick={() => endGameMutation.mutate()}
-                  disabled={endGameMutation.isPending}
-                  className="btn-danger"
-                >
-                  ⏹️ End Game
-                </button>
-              </>
+              <button
+                onClick={() => endGameMutation.mutate()}
+                disabled={endGameMutation.isPending}
+                className="btn-danger"
+              >
+                ⏹️ End Game
+              </button>
             )}
             {wsState.phase === 'completed' && (
               <button
