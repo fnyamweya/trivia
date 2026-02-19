@@ -84,6 +84,14 @@ export type ClientMessage =
 
 export interface WelcomeMessage {
   type: 'WELCOME';
+  requestId?: string;
+  timestamp?: number;
+  clientMsgId?: string;
+  serverTime?: number;
+  sessionId?: string;
+  role?: 'teacher' | 'student';
+  userId?: string;
+  teamId?: string;
   payload: {
     sessionId: string;
     phase: SessionPhase;
@@ -116,7 +124,14 @@ export interface QuestionPushedMessage {
 
 export interface TugUpdateMessage {
   type: 'TUG_UPDATE';
-  payload: {
+  requestId?: string;
+  timestamp?: number;
+  position?: number;
+  delta?: number;
+  teamId?: string;
+  reason?: string;
+  lastEventId?: string;
+  payload?: {
     position: number;
     delta: number;
     teamScores?: Record<string, number>;
@@ -143,7 +158,11 @@ export interface RevealAnswerMessage {
 
 export interface PhaseChangeMessage {
   type: 'PHASE_CHANGE';
-  payload: {
+  requestId?: string;
+  timestamp?: number;
+  phase?: SessionPhase;
+  previousPhase?: SessionPhase;
+  payload?: {
     phase: SessionPhase;
   };
 }
@@ -207,6 +226,48 @@ export interface PlayerKickedMessage {
   reason?: string;
 }
 
+export interface LegacyQuestionMessage {
+  type: 'QUESTION';
+  requestId?: string;
+  timestamp?: number;
+  question: {
+    id: string;
+    type: string;
+    difficulty: string;
+    text: string;
+    answers: { id: string; text: string }[];
+    timeLimitMs: number;
+    points: number;
+  };
+  questionIndex: number;
+  totalQuestions: number;
+  timeLimitMs: number;
+  startsAt: number;
+}
+
+export interface LegacyQuestionRevealMessage {
+  type: 'QUESTION_REVEAL';
+  requestId?: string;
+  timestamp?: number;
+  questionInstanceId: string;
+  correctAnswerId: string;
+  explanation?: string;
+  stats?: unknown;
+}
+
+export interface LegacyAnswerResultMessage {
+  type: 'ANSWER_RESULT';
+  requestId?: string;
+  timestamp?: number;
+  clientMsgId?: string;
+  correct: boolean;
+  correctAnswerId: string;
+  delta: number;
+  newPosition: number;
+  pointsAwarded: number;
+  responseTimeMs: number;
+}
+
 export type ServerMessage =
   | WelcomeMessage
   | PlayerJoinedMessage
@@ -221,7 +282,10 @@ export type ServerMessage =
   | AckMessage
   | StateSnapshotMessage
   | RosterUpdateMessage
-  | PlayerKickedMessage;
+  | PlayerKickedMessage
+  | LegacyQuestionMessage
+  | LegacyQuestionRevealMessage
+  | LegacyAnswerResultMessage;
 
 // ============================================================================
 // WebSocket Error Codes

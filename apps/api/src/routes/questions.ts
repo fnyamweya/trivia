@@ -16,7 +16,7 @@ import {
 } from '@trivia/shared';
 import type { Env, Variables } from '../types/env.js';
 import { requireAuth, requireTenant, requireRole } from '../auth/jwt.js';
-import { queryAll, queryOne, execute, buildPaginatedQuery, processPaginatedResults, decodeCursor } from '../db/helpers.js';
+import { queryAll, queryOne, execute, processPaginatedResults, decodeCursor } from '../db/helpers.js';
 import { idempotencyMiddleware } from '../db/idempotency.js';
 import { ApiError } from '../observability/error-handler.js';
 

@@ -3,7 +3,7 @@
  */
 
 import { Hono } from 'hono';
-import { sessionReportQuerySchema, type SessionSummary, type QuestionSummary } from '@trivia/shared';
+import { sessionReportQuerySchema, type SessionSummary } from '@trivia/shared';
 import type { Env, Variables } from '../types/env.js';
 import { requireAuth, requireTenant } from '../auth/jwt.js';
 import { queryAll, queryOne } from '../db/helpers.js';

@@ -105,13 +105,20 @@ export const useGameStore = create<GameStore>((set, get) => {
         break;
 
       case 'TUG_UPDATE':
+        if (!message.payload && (message.position === undefined || message.delta === undefined)) {
+          break;
+        }
+        {
+          const positionValue = message.payload?.position ?? message.position ?? 50;
+          const deltaValue = message.payload?.delta ?? message.delta ?? 0;
         set({
           position: {
-            value: message.payload.position,
-            direction: message.payload.delta > 0 ? 'right' : message.payload.delta < 0 ? 'left' : 'none',
+            value: positionValue,
+            direction: deltaValue > 0 ? 'right' : deltaValue < 0 ? 'left' : 'none',
             lastChange: Date.now(),
           },
         });
+        }
         break;
 
       case 'ANSWER_ACK':
@@ -134,6 +141,9 @@ export const useGameStore = create<GameStore>((set, get) => {
         break;
 
       case 'GAME_END':
+        if (!message.payload) {
+          break;
+        }
         set({
           phase: 'completed',
           winningTeam: message.payload.winner,
@@ -146,7 +156,7 @@ export const useGameStore = create<GameStore>((set, get) => {
         break;
 
       case 'PHASE_CHANGE':
-        set({ phase: message.payload.phase });
+        set({ phase: message.payload?.phase ?? message.phase ?? 'lobby' });
         break;
 
       case 'ERROR':

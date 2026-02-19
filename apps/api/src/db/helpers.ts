@@ -4,8 +4,6 @@
  * Provides type-safe query utilities and common patterns for D1.
  */
 
-import type { Env } from '../types/env.js';
-
 /**
  * Execute a query and return all results with type safety
  */

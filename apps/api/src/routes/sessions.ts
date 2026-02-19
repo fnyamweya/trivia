@@ -7,7 +7,6 @@ import {
   createSessionSchema,
   setTeamsSchema,
   rulesetSchema,
-  kickPlayerSchema,
   DEFAULT_TEAM_COLORS,
   DEFAULT_TEAM_NAMES,
   MAX_PLAYERS_PER_SESSION,

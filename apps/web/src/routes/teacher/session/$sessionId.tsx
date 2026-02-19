@@ -75,13 +75,13 @@ function TeacherSessionPage() {
         case 'TUG_UPDATE':
           setWsState((prev) => ({
             ...prev,
-            position: message.payload.position,
+            position: message.payload?.position ?? message.position ?? prev.position,
           }));
           break;
         case 'PHASE_CHANGE':
           setWsState((prev) => ({
             ...prev,
-            phase: message.payload.phase,
+            phase: message.payload?.phase ?? message.phase ?? prev.phase,
           }));
           break;
         case 'QUESTION_PUSHED':

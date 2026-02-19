@@ -14,7 +14,6 @@ import {
   type Student,
   type QuestionInstance,
   type Answer,
-  type TugPosition,
   type ClientMessage,
   type ServerMessage,
   type HelloMessage,
@@ -139,7 +138,7 @@ export class SessionDurableObject implements DurableObject {
   // WebSocket Handling
   // ============================================================================
 
-  private async handleWebSocketUpgrade(request: Request): Promise<Response> {
+  private async handleWebSocketUpgrade(_request: Request): Promise<Response> {
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
 
@@ -234,7 +233,7 @@ export class SessionDurableObject implements DurableObject {
     }
   }
 
-  async webSocketClose(ws: WebSocket, code: number, reason: string): Promise<void> {
+  async webSocketClose(ws: WebSocket, _code: number, _reason: string): Promise<void> {
     const client = this.clients.get(ws);
     if (client && client.userId) {
       // Update connection status in D1
@@ -311,9 +310,15 @@ export class SessionDurableObject implements DurableObject {
       clientMsgId: message.clientMsgId,
       serverTime: Date.now(),
       sessionId: this.storedState.sessionId,
-      role: user.role,
+      role: user.role === 'admin' ? 'teacher' : user.role,
       userId: user.id,
       teamId: user.teamId,
+      payload: {
+        sessionId: this.storedState.sessionId,
+        phase: this.storedState.phase,
+        position: this.storedState.position,
+        teams: this.storedState.teams,
+      },
     });
 
     // Send current state snapshot
@@ -573,7 +578,7 @@ export class SessionDurableObject implements DurableObject {
     });
   }
 
-  private async handlePause(ws: WebSocket, client: ConnectedClient): Promise<void> {
+  private async handlePause(_ws: WebSocket, client: ConnectedClient): Promise<void> {
     if (client.role !== 'teacher') return;
     if (!this.storedState || this.storedState.phase !== 'active_question') return;
 
@@ -590,7 +595,7 @@ export class SessionDurableObject implements DurableObject {
     });
   }
 
-  private async handleResume(ws: WebSocket, client: ConnectedClient): Promise<void> {
+  private async handleResume(_ws: WebSocket, client: ConnectedClient): Promise<void> {
     if (client.role !== 'teacher') return;
     if (!this.storedState || this.storedState.phase !== 'paused') return;
 
@@ -674,7 +679,7 @@ export class SessionDurableObject implements DurableObject {
     });
   }
 
-  private async handleTeacherEndGame(ws: WebSocket, client: ConnectedClient): Promise<void> {
+  private async handleTeacherEndGame(_ws: WebSocket, client: ConnectedClient): Promise<void> {
     if (client.role !== 'teacher') return;
     await this.endGame();
   }
@@ -907,8 +912,8 @@ export class SessionDurableObject implements DurableObject {
     // Broadcast question (student-safe version without correct answers)
     const studentSafeQuestion = {
       id: questionInstance.id,
-      type: questionRow.type,
-      difficulty: questionRow.difficulty,
+      type: questionRow.type as string,
+      difficulty: questionRow.difficulty as string,
       text: questionInstance.text,
       answers: answers.map((a) => ({ id: a.id, text: a.text })),
       timeLimitMs: questionInstance.timeLimitMs,
