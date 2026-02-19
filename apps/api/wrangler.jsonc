@@ -99,7 +99,7 @@
         {
           "binding": "DB",
           "database_name": "trivia-db-staging",
-          "database_id": "placeholder-staging-id",
+          "database_id": "fc8b511a-2aa9-4d96-91d1-b95fc1e85d28",
           "migrations_dir": "./migrations"
         }
       ],
