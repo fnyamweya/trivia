@@ -70,6 +70,12 @@ jobs:
       - name: Build web app
         run: pnpm --filter @trivia/web build
 
+      - name: Sync web assets to Worker public directory
+        run: |
+          mkdir -p apps/api/public
+          rsync -a --delete apps/web/dist/ apps/api/public/
+          echo "Synced web assets to apps/api/public"
+
       - name: Run D1 migrations (staging)
         run: |
           cd apps/api
@@ -133,6 +139,12 @@ jobs:
         run: pnpm --filter @trivia/web build
         env:
           NODE_ENV: production
+
+      - name: Sync web assets to Worker public directory
+        run: |
+          mkdir -p apps/api/public
+          rsync -a --delete apps/web/dist/ apps/api/public/
+          echo "Synced web assets to apps/api/public"
 
       - name: Run D1 migrations (production)
         run: |
