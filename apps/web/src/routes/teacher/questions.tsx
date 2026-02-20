@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/stores/auth';
 import { api } from '@/lib/api';
 
@@ -12,6 +12,19 @@ function QuestionsPage() {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [successToast, setSuccessToast] = useState('');
+
+  useEffect(() => {
+    if (!successToast) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setSuccessToast('');
+    }, 2500);
+
+    return () => window.clearTimeout(timer);
+  }, [successToast]);
 
   const { data: questions, isLoading } = useQuery({
     queryKey: ['questions'],
@@ -172,9 +185,18 @@ function QuestionsPage() {
           onClose={() => setShowCreateModal(false)}
           onCreated={() => {
             setShowCreateModal(false);
+            setSuccessToast('Question created successfully!');
             queryClient.invalidateQueries({ queryKey: ['questions'] });
           }}
         />
+      )}
+
+      {successToast && (
+        <div className="fixed right-4 top-4 z-[60]">
+          <div className="rounded-xl border-2 border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700 shadow-lg">
+            ✅ {successToast}
+          </div>
+        </div>
       )}
     </div>
   );
