@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useGameStore } from '@/stores/game';
 
 export function QuestionCard() {
-  const { currentQuestion, myAnswer, submitAnswer, questionNumber, totalQuestions } = useGameStore();
+  const { currentQuestion, myAnswer, submitAnswer, questionNumber, totalQuestions, myTeamId, soloMode } = useGameStore();
   const [timeLeft, setTimeLeft] = useState(0);
 
   // Timer countdown
@@ -33,17 +33,18 @@ export function QuestionCard() {
   const hasAnswered = !!myAnswer;
   const isRevealed = myAnswer?.correct !== undefined;
   const timerCritical = timeLeft <= 5;
+  const canAnswer = soloMode || !!myTeamId;
 
   return (
     <div className="max-w-2xl mx-auto">
       {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <span className="text-sm text-gray-400">
+      <div className="mb-4 flex items-center justify-between">
+        <span className="text-xs font-black uppercase tracking-wider text-white/80">
           Question {questionNumber} of {totalQuestions}
         </span>
         <span
-          className={`text-lg font-mono font-bold ${
-            timerCritical ? 'text-red-500 animate-pulse' : 'text-white'
+          className={`rounded-full px-3 py-1 text-lg font-black ${
+            timerCritical ? 'animate-pulse bg-red-500 text-white' : 'bg-white/20 text-white'
           }`}
         >
           {timeLeft}s
@@ -51,8 +52,14 @@ export function QuestionCard() {
       </div>
 
       {/* Question */}
-      <div className="card bg-gray-800 text-white">
-        <h2 className="text-xl font-semibold mb-6">{currentQuestion.stem}</h2>
+      <div className="card border-white/70 bg-white text-slate-800">
+        <h2 className="mb-6 text-xl font-black leading-snug text-slate-800">{currentQuestion.stem}</h2>
+
+        {!canAnswer && (
+          <div className="mb-4 rounded-xl border-2 border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-700">
+            Pick a team or switch to Solo Mode in the lobby before submitting answers.
+          </div>
+        )}
 
         {/* Choices */}
         <div className="grid gap-3">
@@ -64,23 +71,23 @@ export function QuestionCard() {
             return (
               <button
                 key={choice.id}
-                onClick={() => !hasAnswered && submitAnswer(choice.id)}
-                disabled={hasAnswered}
+                onClick={() => !hasAnswered && canAnswer && submitAnswer(choice.id)}
+                disabled={hasAnswered || !canAnswer}
                 className={`
-                  p-4 rounded-lg text-left transition-all
+                  rounded-2xl border-b-[6px] p-4 text-left font-semibold transition-all
                   ${
                     isCorrect
-                      ? 'bg-green-600 border-2 border-green-400'
+                      ? 'border-green-700 bg-green-500 text-white'
                       : isIncorrect
-                        ? 'bg-red-600 border-2 border-red-400'
+                        ? 'border-red-700 bg-red-500 text-white'
                         : isSelected
-                          ? 'bg-primary-600 border-2 border-primary-400'
-                          : 'bg-gray-700 hover:bg-gray-600 border-2 border-transparent'
+                          ? 'border-primary-700 bg-primary-500 text-white'
+                          : 'border-slate-300 bg-white hover:-translate-y-0.5 hover:bg-slate-50'
                   }
-                  ${hasAnswered && !isSelected ? 'opacity-50' : ''}
+                  ${hasAnswered && !isSelected ? 'opacity-60' : ''}
                 `}
               >
-                <span className="inline-block w-8 h-8 rounded-full bg-gray-600 text-center leading-8 mr-3">
+                <span className="mr-3 inline-block h-8 w-8 rounded-full bg-slate-700 text-center leading-8 text-white">
                   {String.fromCharCode(65 + index)}
                 </span>
                 {choice.text}
@@ -92,25 +99,25 @@ export function QuestionCard() {
         {/* Feedback */}
         {hasAnswered && !isRevealed && (
           <div className="mt-6 text-center">
-            <div className="inline-block animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent" />
-            <p className="mt-2 text-gray-400">Answer submitted! Waiting for results...</p>
+            <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
+            <p className="mt-2 text-sm font-semibold text-slate-500">Answer submitted! Waiting for results...</p>
           </div>
         )}
 
         {isRevealed && (
-          <div className="mt-6 p-4 rounded-lg bg-gray-700">
+          <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
             {myAnswer?.correct ? (
-              <div className="text-green-400">
-                <p className="text-lg font-bold">✓ Correct!</p>
-                <p className="text-sm">
+              <div className="text-green-600">
+                <p className="text-lg font-black uppercase">✓ Correct!</p>
+                <p className="text-sm font-semibold">
                   +{myAnswer.points} points
                   {(myAnswer.streakBonus ?? 0) > 0 && ` (+${myAnswer.streakBonus} streak bonus!)`}
                 </p>
               </div>
             ) : (
-              <div className="text-red-400">
-                <p className="text-lg font-bold">✗ Incorrect</p>
-                <p className="text-sm">Better luck on the next one!</p>
+              <div className="text-red-600">
+                <p className="text-lg font-black uppercase">✗ Incorrect</p>
+                <p className="text-sm font-semibold">Better luck on the next one!</p>
               </div>
             )}
           </div>

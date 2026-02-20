@@ -8,13 +8,13 @@ export function GameEnd() {
   const winner = winningTeam || (position.value < 50 ? leftTeam : rightTeam);
 
   return (
-    <div className="max-w-2xl mx-auto text-center">
+    <div className="mx-auto max-w-3xl text-center">
       {/* Victory Banner */}
-      <div className="mb-8">
+      <div className="mb-8 text-white">
         <div className="text-6xl mb-4">🏆</div>
-        <h1 className="text-4xl font-bold mb-2">Game Over!</h1>
+        <h1 className="mb-2 text-4xl font-black uppercase tracking-tight">Game Over!</h1>
         {winner && (
-          <p className="text-2xl">
+          <p className="text-2xl font-bold">
             <span
               className={
                 winner.side === 'left'
@@ -38,35 +38,35 @@ export function GameEnd() {
             <div
               key={team.id}
               className={`card ${
-                team.side === 'left' ? 'bg-team-red/20' : 'bg-team-blue/20'
+                team.side === 'left' ? 'bg-team-red/10' : 'bg-team-blue/10'
               } ${isWinner ? 'ring-2 ring-yellow-400' : ''}`}
             >
               {isWinner && (
                 <div className="text-2xl mb-2">👑</div>
               )}
               <h2
-                className={`text-xl font-bold mb-2 ${
+                className={`mb-2 text-xl font-black uppercase tracking-tight ${
                   team.side === 'left' ? 'text-team-red' : 'text-team-blue'
                 }`}
               >
                 {team.name}
               </h2>
-              <p className="text-3xl font-bold">{team.score}</p>
-              <p className="text-sm text-gray-400">points</p>
+              <p className="text-3xl font-black text-slate-700">{team.score}</p>
+              <p className="text-sm font-semibold text-slate-500">points</p>
             </div>
           );
         })}
       </div>
 
       {/* Final Position */}
-      <div className="card bg-gray-800 mb-8">
-        <h3 className="font-semibold mb-4">Final Rope Position</h3>
-        <div className="relative h-8 rounded-full overflow-hidden bg-gray-700">
+      <div className="card mb-8">
+        <h3 className="mb-4 font-black uppercase tracking-tight text-primary-700">Final Rope Position</h3>
+        <div className="relative h-8 overflow-hidden rounded-full bg-slate-700">
           <div className="absolute inset-0 bg-gradient-to-r from-team-red/30 via-transparent to-team-blue/30" />
           <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-white/30" />
           <div
-            className="absolute top-1 bottom-1 w-3 rounded-full bg-white shadow-lg"
-            style={{ left: `calc(${position}% - 6px)` }}
+            className="absolute bottom-1 top-1 w-3 rounded-full bg-yellow-300 shadow-lg"
+            style={{ left: `calc(${position.value}% - 6px)` }}
           />
         </div>
       </div>

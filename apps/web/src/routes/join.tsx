@@ -39,11 +39,11 @@ function JoinPage() {
     <div className="flex min-h-screen flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="card">
-          <h1 className="text-2xl font-bold text-center mb-6">Join Game</h1>
+          <h1 className="mb-6 text-center text-3xl font-black uppercase tracking-tight text-primary-700">Join Game</h1>
 
           <form onSubmit={handleJoin} className="space-y-4">
             <div>
-              <label htmlFor="joinCode" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="joinCode" className="mb-1 block text-xs font-black uppercase tracking-wide text-slate-500">
                 Game Code
               </label>
               <input
@@ -52,7 +52,7 @@ function JoinPage() {
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase().slice(0, 6))}
                 placeholder="ABC123"
-                className="input text-center text-2xl tracking-widest uppercase"
+                className="input text-center text-2xl font-black tracking-[0.35em] uppercase"
                 maxLength={6}
                 required
                 autoFocus
@@ -60,7 +60,7 @@ function JoinPage() {
             </div>
 
             <div>
-              <label htmlFor="nickname" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="nickname" className="mb-1 block text-xs font-black uppercase tracking-wide text-slate-500">
                 Your Nickname
               </label>
               <input
@@ -74,13 +74,13 @@ function JoinPage() {
                 maxLength={20}
                 required
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs font-semibold text-slate-500">
                 Letters, numbers, underscores, and hyphens only
               </p>
             </div>
 
             {error && (
-              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+              <div className="rounded-xl border-2 border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-600">
                 {error}
               </div>
             )}

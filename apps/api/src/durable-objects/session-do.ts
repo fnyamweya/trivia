@@ -83,7 +83,7 @@ interface SessionBootstrapRow {
 
 interface AnswerRecord {
   studentId: string;
-  teamId: string;
+  teamId: string | null;
   answerId: string;
   isCorrect: boolean;
   responseTimeMs: number;
@@ -329,6 +329,7 @@ export class SessionDurableObject implements DurableObject {
     }
 
     // Send welcome message
+    const rosterStudents = await this.loadRosterStudents();
     this.send(ws, {
       type: 'WELCOME',
       requestId: crypto.randomUUID(),
@@ -344,6 +345,11 @@ export class SessionDurableObject implements DurableObject {
         phase: this.storedState.phase,
         position: this.storedState.position,
         teams: this.storedState.teams,
+        students: rosterStudents.map((student) => ({
+          id: student.id,
+          nickname: student.nickname,
+          teamId: student.teamId ?? '',
+        })),
       },
     });
 
@@ -366,18 +372,23 @@ export class SessionDurableObject implements DurableObject {
 
     if (!this.storedState) return;
 
-    const team = this.storedState.teams.find((t) => t.id === message.teamId);
-    if (!team) {
-      this.sendError(ws, 'NOT_AUTHORIZED', 'Team not found', message.clientMsgId);
-      return;
+    const normalizedTeamId = message.teamId.trim().toUpperCase();
+    const isSoloMode = normalizedTeamId === 'SOLO' || normalizedTeamId === 'INDIVIDUAL';
+
+    if (!isSoloMode) {
+      const team = this.storedState.teams.find((t) => t.id === message.teamId);
+      if (!team) {
+        this.sendError(ws, 'NOT_AUTHORIZED', 'Team not found', message.clientMsgId);
+        return;
+      }
     }
 
     // Update in D1
     await this.env.DB.prepare(
       `UPDATE students SET team_id = ? WHERE id = ?`
-    ).bind(message.teamId, client.userId).run();
+    ).bind(isSoloMode ? null : message.teamId, client.userId).run();
 
-    client.teamId = message.teamId;
+    client.teamId = isSoloMode ? undefined : message.teamId;
 
     // Send ack
     this.send(ws, {
@@ -449,7 +460,7 @@ export class SessionDurableObject implements DurableObject {
     // Record the answer
     const answerRecord: AnswerRecord = {
       studentId: client.userId,
-      teamId: client.teamId!,
+      teamId: client.teamId ?? null,
       answerId: message.choiceId,
       isCorrect,
       responseTimeMs,
@@ -1301,12 +1312,46 @@ export class SessionDurableObject implements DurableObject {
   private broadcastRosterUpdate(): void {
     if (!this.storedState) return;
 
-    this.broadcast({
-      type: 'ROSTER_UPDATE',
-      requestId: crypto.randomUUID(),
-      timestamp: Date.now(),
-      teams: this.storedState.teams,
-      totalPlayers: this.storedState.teams.reduce((sum, t) => sum + t.members.length, 0),
-    });
+    void (async () => {
+      const students = await this.loadRosterStudents();
+      this.broadcast({
+        type: 'ROSTER_UPDATE',
+        requestId: crypto.randomUUID(),
+        timestamp: Date.now(),
+        teams: this.storedState?.teams ?? [],
+        students: students.map((student) => ({
+          id: student.id,
+          nickname: student.nickname,
+          teamId: student.teamId ?? '',
+          connectionStatus: student.connectionStatus,
+        })),
+        totalPlayers: students.length,
+      });
+    })();
+  }
+
+  private async loadRosterStudents(): Promise<Array<{
+    id: string;
+    nickname: string;
+    teamId: string | null;
+    connectionStatus: string;
+  }>> {
+    if (!this.storedState) {
+      return [];
+    }
+
+    const rows = await this.env.DB.prepare(
+      `SELECT id, nickname, team_id, connection_status
+       FROM students
+       WHERE session_id = ? AND connection_status != 'kicked'
+       ORDER BY joined_at ASC`
+    ).bind(this.storedState.sessionId).all();
+
+    return rows.results.map((row) => ({
+      id: row.id as string,
+      nickname: row.nickname as string,
+      teamId: (row.team_id as string | null) ?? null,
+      connectionStatus: row.connection_status as string,
+    }));
   }
 }

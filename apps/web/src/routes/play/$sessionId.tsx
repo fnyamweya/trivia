@@ -14,7 +14,7 @@ export const Route = createFileRoute('/play/$sessionId')({
 
 function PlayPage() {
   const { sessionId } = Route.useParams();
-  const { accessToken } = useAuthStore();
+  const { accessToken, studentSession, user } = useAuthStore();
   const { connect, disconnect, position, teams, phase, connectionStatus } = useGameStore();
 
   useEffect(() => {
@@ -35,6 +35,20 @@ function PlayPage() {
           <p className="text-gray-600 mb-4">Please rejoin the game with your code.</p>
           <Link to="/join" className="btn-primary">
             Go to Join Page
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (user?.role !== 'student' || (studentSession && studentSession.id !== sessionId)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="card max-w-md text-center">
+          <h2 className="mb-2 text-2xl font-black uppercase tracking-tight text-primary-700">Invalid Session</h2>
+          <p className="mb-4 text-sm font-semibold text-slate-600">This play link doesn’t match your active student session.</p>
+          <Link to="/join" className="btn-primary">
+            Rejoin with Code
           </Link>
         </div>
       </div>
@@ -67,9 +81,9 @@ function PlayPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
+    <div className="min-h-screen text-white">
       {/* Tug Meter - Always visible */}
-      <div className="sticky top-0 z-10 bg-gray-900/90 backdrop-blur-sm p-4">
+      <div className="sticky top-0 z-10 border-b border-white/20 bg-primary-700/90 p-4 backdrop-blur-sm">
         <TugMeter
           position={position?.value ?? 50}
           teams={teams ?? []}
@@ -85,13 +99,13 @@ function PlayPage() {
         ) : phase === 'active_question' || phase === 'reveal' ? (
           <QuestionCard />
         ) : phase === 'paused' ? (
-          <div className="text-center py-16">
-            <h2 className="text-3xl font-bold mb-4">Game Paused</h2>
-            <p className="text-gray-400">Waiting for teacher to resume...</p>
+          <div className="card mx-auto max-w-lg py-16 text-center text-slate-700">
+            <h2 className="mb-4 text-3xl font-black uppercase tracking-tight text-primary-700">Game Paused</h2>
+            <p className="font-semibold">Waiting for teacher to resume...</p>
           </div>
         ) : (
-          <div className="text-center py-16">
-            <p className="text-gray-400">Waiting for game to start...</p>
+          <div className="card mx-auto max-w-lg py-16 text-center text-slate-700">
+            <p className="font-semibold">Waiting for game to start...</p>
           </div>
         )}
       </main>

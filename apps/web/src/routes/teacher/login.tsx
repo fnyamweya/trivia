@@ -35,11 +35,11 @@ function TeacherLoginPage() {
     <div className="flex min-h-screen flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="card">
-          <h1 className="text-2xl font-bold text-center mb-6">Teacher Login</h1>
+          <h1 className="mb-6 text-center text-3xl font-black uppercase tracking-tight text-primary-700">Teacher Login</h1>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="mb-1 block text-xs font-black uppercase tracking-wide text-slate-500">
                 Email Address
               </label>
               <input
@@ -55,7 +55,7 @@ function TeacherLoginPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="mb-1 block text-xs font-black uppercase tracking-wide text-slate-500">
                 Password
               </label>
               <input
@@ -70,12 +70,12 @@ function TeacherLoginPage() {
               />
             </div>
 
-            <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-700">
+            <div className="rounded-xl border-2 border-primary-200 bg-primary-50 p-3 text-sm font-semibold text-primary-700">
               <strong>Seeded account:</strong> <code>teacher@demo.school</code> / <code>password123</code>
             </div>
 
             {error && (
-              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+              <div className="rounded-xl border-2 border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-600">
                 {error}
               </div>
             )}

@@ -14,35 +14,35 @@ export function TugMeter({ position, teams }: TugMeterProps) {
   const rightWinning = position > 80;
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <div className="mx-auto w-full max-w-3xl">
       {/* Team Labels */}
       <div className="flex justify-between mb-2">
-        <div className={`flex items-center gap-2 ${leftWinning ? 'scale-110' : ''} transition-transform`}>
-          <div className="w-4 h-4 rounded-full bg-team-red" />
-          <span className="font-bold text-team-red">
+        <div className={`flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 ${leftWinning ? 'scale-110' : ''} transition-transform`}>
+          <div className="h-4 w-4 rounded-full bg-team-red" />
+          <span className="font-black uppercase tracking-wide text-red-100">
             {leftTeam?.name ?? 'Team Red'}
           </span>
           {leftTeam && (
-            <span className="text-sm text-gray-400">
+            <span className="text-xs font-bold text-white/80">
               {leftTeam.score} pts
             </span>
           )}
         </div>
-        <div className={`flex items-center gap-2 ${rightWinning ? 'scale-110' : ''} transition-transform`}>
+        <div className={`flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 ${rightWinning ? 'scale-110' : ''} transition-transform`}>
           {rightTeam && (
-            <span className="text-sm text-gray-400">
+            <span className="text-xs font-bold text-white/80">
               {rightTeam.score} pts
             </span>
           )}
-          <span className="font-bold text-team-blue">
+          <span className="font-black uppercase tracking-wide text-blue-100">
             {rightTeam?.name ?? 'Team Blue'}
           </span>
-          <div className="w-4 h-4 rounded-full bg-team-blue" />
+          <div className="h-4 w-4 rounded-full bg-team-blue" />
         </div>
       </div>
 
       {/* The Meter */}
-      <div className="relative h-10 rounded-full overflow-hidden bg-gray-700">
+      <div className="relative h-12 overflow-hidden rounded-2xl border-2 border-white/40 bg-[#0c2d63] shadow-xl">
         {/* Gradient background showing team zones */}
         <div className="absolute inset-0 bg-gradient-to-r from-team-red/30 via-transparent to-team-blue/30" />
 
@@ -55,10 +55,10 @@ export function TugMeter({ position, teams }: TugMeterProps) {
 
         {/* The marker (rope position) */}
         <div
-          className="absolute top-1 bottom-1 w-3 rounded-full bg-white shadow-lg transition-all duration-300 ease-out"
+          className="absolute bottom-1 top-1 w-4 rounded-xl border border-white/60 bg-yellow-300 shadow-lg transition-all duration-300 ease-out"
           style={{
-            left: `calc(${position}% - 6px)`,
-            boxShadow: '0 0 10px rgba(255,255,255,0.5)',
+            left: `calc(${position}% - 8px)`,
+            boxShadow: '0 0 12px rgba(255, 255, 255, 0.6)',
           }}
         />
 
@@ -73,7 +73,7 @@ export function TugMeter({ position, teams }: TugMeterProps) {
 
       {/* Position indicator */}
       <div className="text-center mt-2">
-        <span className="text-xs text-gray-400">
+        <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-black uppercase tracking-wide text-white/90">
           {position < 45
             ? `${leftTeam?.name ?? 'Red'} pulling ahead!`
             : position > 55

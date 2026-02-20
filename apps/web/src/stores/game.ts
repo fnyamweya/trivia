@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { wsClient } from '@/lib/ws-client';
 import type { ServerMessage, Team, SessionPhase } from '@trivia/shared';
+import { useAuthStore } from '@/stores/auth';
 
 interface Position {
   value: number; // 0-100, 50 = center
@@ -24,6 +25,12 @@ interface StudentAnswer {
   streakBonus?: number;
 }
 
+interface RosterStudent {
+  id: string;
+  nickname: string;
+  teamId: string | null;
+}
+
 interface GameState {
   sessionId: string | null;
   position: Position;
@@ -34,7 +41,9 @@ interface GameState {
   questionNumber: number;
   totalQuestions: number;
   winningTeam: Team | null;
-  students: { id: string; nickname: string; teamId: string }[];
+  students: RosterStudent[];
+  myTeamId: string | null;
+  soloMode: boolean;
 }
 
 interface GameStore extends GameState {
@@ -42,6 +51,8 @@ interface GameStore extends GameState {
   connect: (sessionId: string, token: string) => void;
   disconnect: () => void;
   submitAnswer: (choiceId: string) => void;
+  joinTeam: (teamId: string) => void;
+  setSoloMode: (enabled: boolean) => void;
 }
 
 const initialState: GameState = {
@@ -55,6 +66,8 @@ const initialState: GameState = {
   totalQuestions: 0,
   winningTeam: null,
   students: [],
+  myTeamId: null,
+  soloMode: false,
 };
 
 export const useGameStore = create<GameStore>((set, get) => {
@@ -62,6 +75,8 @@ export const useGameStore = create<GameStore>((set, get) => {
   const handleMessage = (message: ServerMessage) => {
     switch (message.type) {
       case 'WELCOME':
+        {
+          const myTeamId = message.teamId ?? null;
         set({
           sessionId: message.payload.sessionId,
           phase: message.payload.phase,
@@ -71,8 +86,15 @@ export const useGameStore = create<GameStore>((set, get) => {
             lastChange: Date.now(),
           },
           teams: message.payload.teams ?? [],
-          students: message.payload.students ?? [],
+          students: (message.payload.students ?? []).map((student) => ({
+            id: student.id,
+            nickname: student.nickname,
+            teamId: student.teamId || null,
+          })),
+          myTeamId,
+          soloMode: myTeamId === null,
         });
+        }
         break;
 
       case 'PLAYER_JOINED':
@@ -82,10 +104,54 @@ export const useGameStore = create<GameStore>((set, get) => {
             {
               id: message.payload.id,
               nickname: message.payload.nickname,
-              teamId: message.payload.teamId,
+              teamId: message.payload.teamId || null,
             },
           ],
         }));
+        break;
+
+      case 'ROSTER_UPDATE':
+        set((state) => {
+          const currentUserId = useAuthStore.getState().user?.id;
+          const rosterStudents =
+            message.students?.map((student) => ({
+              id: student.id,
+              nickname: student.nickname,
+              teamId: student.teamId || null,
+            })) ??
+            message.teams.flatMap((team) =>
+              team.members.map((member) => ({
+                id: member.id,
+                nickname: member.nickname,
+                teamId: team.id,
+              }))
+            );
+
+          const myself = rosterStudents.find((student) => student.id === currentUserId);
+
+          return {
+            teams: message.teams,
+            students: rosterStudents,
+            myTeamId: myself?.teamId ?? state.myTeamId ?? null,
+            soloMode: myself ? myself.teamId === null : state.soloMode,
+          };
+        });
+        break;
+
+      case 'QUESTION':
+        set({
+          currentQuestion: {
+            instanceId: message.question.id,
+            stem: message.question.text,
+            choices: message.question.answers,
+            timeLimit: Math.round(message.question.timeLimitMs / 1000),
+            startedAt: message.startsAt,
+          },
+          myAnswer: null,
+          phase: 'active_question',
+          questionNumber: message.questionIndex + 1,
+          totalQuestions: message.totalQuestions,
+        });
         break;
 
       case 'QUESTION_PUSHED':
@@ -134,7 +200,26 @@ export const useGameStore = create<GameStore>((set, get) => {
         }));
         break;
 
+      case 'ANSWER_RESULT':
+        set((state) => ({
+          myAnswer: state.myAnswer
+            ? {
+                ...state.myAnswer,
+                correct: message.correct,
+                points: message.pointsAwarded,
+                streakBonus: 0,
+              }
+            : null,
+        }));
+        break;
+
       case 'REVEAL_ANSWER':
+        set({
+          phase: 'reveal',
+        });
+        break;
+
+      case 'QUESTION_REVEAL':
         set({
           phase: 'reveal',
         });
@@ -187,6 +272,7 @@ export const useGameStore = create<GameStore>((set, get) => {
     submitAnswer: (choiceId: string) => {
       const state = get();
       if (!state.currentQuestion || state.myAnswer) return;
+      if (!state.soloMode && !state.myTeamId) return;
 
       // Optimistically set the answer
       set({
@@ -201,6 +287,36 @@ export const useGameStore = create<GameStore>((set, get) => {
         instanceId: state.currentQuestion.instanceId,
         choiceId,
       });
+    },
+
+    joinTeam: (teamId: string) => {
+      const currentUserId = useAuthStore.getState().user?.id;
+      wsClient.send({
+        type: 'JOIN_TEAM',
+        teamId,
+      });
+
+      set((state) => ({
+        myTeamId: teamId,
+        soloMode: false,
+        students: state.students.map((student) =>
+          student.id === currentUserId ? { ...student, teamId } : student
+        ),
+      }));
+    },
+
+    setSoloMode: (enabled: boolean) => {
+      if (enabled) {
+        wsClient.send({
+          type: 'JOIN_TEAM',
+          teamId: 'SOLO',
+        });
+      }
+
+      set((state) => ({
+        soloMode: enabled,
+        myTeamId: enabled ? null : state.myTeamId,
+      }));
     },
   };
 });

@@ -22,7 +22,7 @@ function TeacherSessionPage() {
     position: number;
     teams: Team[];
     phase: string;
-    students: { id: string; nickname: string; teamId: string }[];
+    students: { id: string; nickname: string; teamId: string | null }[];
     currentQuestion: { instanceId: string; stem: string; choices: { id: string; text: string }[] } | null;
   }>({
     position: 50,
@@ -56,7 +56,10 @@ function TeacherSessionPage() {
             phase: message.payload.phase,
             position: message.payload.position ?? 50,
             teams: message.payload.teams ?? [],
-            students: message.payload.students ?? [],
+            students: (message.payload.students ?? []).map((student) => ({
+              ...student,
+              teamId: student.teamId || null,
+            })),
           }));
           break;
         case 'PLAYER_JOINED':
@@ -67,9 +70,22 @@ function TeacherSessionPage() {
               {
                 id: message.payload.id,
                 nickname: message.payload.nickname,
-                teamId: message.payload.teamId,
+                teamId: message.payload.teamId || null,
               },
             ],
+          }));
+          break;
+        case 'ROSTER_UPDATE':
+          setWsState((prev) => ({
+            ...prev,
+            teams: message.teams,
+            students:
+              message.students?.map((student) => ({
+                id: student.id,
+                nickname: student.nickname,
+                teamId: student.teamId || null,
+              })) ??
+              prev.students,
           }));
           break;
         case 'TUG_UPDATE':
@@ -88,6 +104,17 @@ function TeacherSessionPage() {
           setWsState((prev) => ({
             ...prev,
             currentQuestion: message.payload,
+            phase: 'active_question',
+          }));
+          break;
+        case 'QUESTION':
+          setWsState((prev) => ({
+            ...prev,
+            currentQuestion: {
+              instanceId: message.question.id,
+              stem: message.question.text,
+              choices: message.question.answers,
+            },
             phase: 'active_question',
           }));
           break;
@@ -141,18 +168,18 @@ function TeacherSessionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen">
       {/* Header */}
-      <header className="bg-white shadow">
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
+      <header className="px-4 pt-4">
+        <div className="card mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{session?.name}</h1>
-            <p className="text-sm text-gray-500">
-              Join Code: <span className="font-mono font-bold text-lg">{session?.joinCode}</span>
+            <h1 className="text-2xl font-black uppercase tracking-tight text-primary-700">{session?.name}</h1>
+            <p className="text-sm font-semibold text-slate-500">
+              Join Code: <span className="rounded-lg bg-primary-50 px-2 py-1 font-mono text-lg font-black tracking-[0.2em] text-primary-700">{session?.joinCode}</span>
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+            <span className={`rounded-full border-2 px-3 py-1 text-xs font-black uppercase tracking-wide ${
               wsState.phase === 'completed' ? 'bg-green-100 text-green-800' :
               wsState.phase === 'lobby' ? 'bg-yellow-100 text-yellow-800' :
               wsState.phase === 'paused' ? 'bg-orange-100 text-orange-800' :
@@ -167,7 +194,7 @@ function TeacherSessionPage() {
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Control Panel */}
         <div className="card mb-8">
-          <h2 className="text-lg font-semibold mb-4">Game Controls</h2>
+          <h2 className="mb-4 text-lg font-black uppercase tracking-tight text-primary-700">Game Controls</h2>
           <div className="flex flex-wrap gap-4">
             {wsState.phase === 'lobby' && (
               <button
@@ -175,7 +202,7 @@ function TeacherSessionPage() {
                 disabled={startGameMutation.isPending || wsState.students.length < 2}
                 className="btn-primary"
               >
-                {startGameMutation.isPending ? 'Starting...' : '▶️ Start Game'}
+                {startGameMutation.isPending ? 'Starting...' : '🚀 Start Game'}
               </button>
             )}
             {(wsState.phase === 'active_question' || wsState.phase === 'reveal') && (
@@ -185,7 +212,7 @@ function TeacherSessionPage() {
                   disabled={endGameMutation.isPending}
                   className="btn-danger"
                 >
-                  ⏹️ End Game
+                  🛑 End Game
                 </button>
               </>
             )}
@@ -195,7 +222,7 @@ function TeacherSessionPage() {
                 disabled={endGameMutation.isPending}
                 className="btn-danger"
               >
-                ⏹️ End Game
+                🛑 End Game
               </button>
             )}
             {wsState.phase === 'completed' && (
@@ -208,7 +235,7 @@ function TeacherSessionPage() {
             )}
           </div>
           {wsState.phase === 'lobby' && wsState.students.length < 2 && (
-            <p className="mt-2 text-sm text-amber-600">
+            <p className="mt-3 rounded-xl border-2 border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-700">
               Need at least 2 players to start (currently {wsState.students.length})
             </p>
           )}
@@ -217,7 +244,7 @@ function TeacherSessionPage() {
         {/* Tug Meter */}
         {wsState.teams.length > 0 && (
           <div className="card mb-8">
-            <h2 className="text-lg font-semibold mb-4">Tug-of-War</h2>
+            <h2 className="mb-4 text-lg font-black uppercase tracking-tight text-primary-700">Tug-of-War</h2>
             <TugMeter position={wsState.position} teams={wsState.teams} />
           </div>
         )}
@@ -225,12 +252,12 @@ function TeacherSessionPage() {
         {/* Current Question (if active) */}
         {wsState.currentQuestion && wsState.phase === 'active_question' && (
           <div className="card mb-8">
-            <h2 className="text-lg font-semibold mb-4">Current Question</h2>
-            <p className="text-xl">{wsState.currentQuestion.stem}</p>
+            <h2 className="mb-4 text-lg font-black uppercase tracking-tight text-primary-700">Current Question</h2>
+            <p className="text-xl font-black text-slate-800">{wsState.currentQuestion.stem}</p>
             <div className="mt-4 grid grid-cols-2 gap-2">
               {wsState.currentQuestion.choices.map((choice: any, i: number) => (
-                <div key={choice.id} className="p-3 bg-gray-100 rounded">
-                  <span className="font-mono mr-2">{String.fromCharCode(65 + i)}.</span>
+                <div key={choice.id} className="rounded-xl border-2 border-slate-200 bg-slate-50 p-3 font-semibold text-slate-700">
+                  <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-700 text-xs font-black text-white">{String.fromCharCode(65 + i)}</span>
                   {choice.text}
                 </div>
               ))}
@@ -239,7 +266,7 @@ function TeacherSessionPage() {
         )}
 
         {/* Teams & Players */}
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid gap-4 md:grid-cols-2">
           {wsState.teams.map((team) => {
             const teamStudents = wsState.students.filter((s) => s.teamId === team.id);
 
@@ -247,26 +274,26 @@ function TeacherSessionPage() {
               <div
                 key={team.id}
                 className={`card ${
-                  team.side === 'left' ? 'border-l-4 border-team-red' : 'border-l-4 border-team-blue'
+                  team.side === 'left' ? 'border-l-8 border-team-red' : 'border-l-8 border-team-blue'
                 }`}
               >
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className={`text-xl font-bold ${
+                  <h3 className={`text-xl font-black uppercase tracking-tight ${
                     team.side === 'left' ? 'text-team-red' : 'text-team-blue'
                   }`}>
                     {team.name}
                   </h3>
-                  <span className="text-2xl font-bold">{team.score}</span>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-2xl font-black text-slate-700">{team.score}</span>
                 </div>
 
                 <div className="space-y-2">
                   {teamStudents.length === 0 ? (
-                    <p className="text-gray-400 text-sm">No players yet</p>
+                    <p className="text-sm font-semibold text-slate-500">No players yet</p>
                   ) : (
                     teamStudents.map((student) => (
-                      <div key={student.id} className="flex items-center gap-2">
+                      <div key={student.id} className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2">
                         <span className="w-2 h-2 rounded-full bg-green-500" />
-                        <span>{student.nickname}</span>
+                        <span className="font-semibold text-slate-700">{student.nickname}</span>
                       </div>
                     ))
                   )}
@@ -275,6 +302,21 @@ function TeacherSessionPage() {
             );
           })}
         </div>
+
+        {wsState.students.some((student) => !student.teamId) && (
+          <div className="card mt-4">
+            <h3 className="mb-3 text-base font-black uppercase tracking-tight text-primary-700">Solo Players</h3>
+            <div className="flex flex-wrap gap-2">
+              {wsState.students
+                .filter((student) => !student.teamId)
+                .map((student) => (
+                  <span key={student.id} className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm font-semibold text-slate-700">
+                    {student.nickname}
+                  </span>
+                ))}
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

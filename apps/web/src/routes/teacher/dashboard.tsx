@@ -43,24 +43,26 @@ function TeacherDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen">
       {/* Header */}
-      <header className="bg-white shadow">
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Teacher Dashboard</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">
-              {user.displayName || user.email}
-            </span>
-            <button
-              onClick={() => {
-                logout();
-                navigate({ to: '/' });
-              }}
-              className="btn-secondary text-sm"
-            >
-              Logout
-            </button>
+      <header className="px-4 pt-4">
+        <div className="card mx-auto max-w-7xl">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-black uppercase tracking-tight text-primary-700">Teacher Dashboard</h1>
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-semibold text-slate-600">
+                {user.displayName || user.email}
+              </span>
+              <button
+                onClick={() => {
+                  logout();
+                  navigate({ to: '/' });
+                }}
+                className="btn-secondary text-xs"
+              >
+                Logout
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -68,10 +70,10 @@ function TeacherDashboard() {
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Quick Actions */}
         <div className="card mb-8">
-          <h2 className="text-xl font-semibold mb-4">Create New Game</h2>
+          <h2 className="mb-4 text-xl font-black uppercase tracking-tight text-primary-700">Create New Game</h2>
           <div className="flex flex-col gap-4 md:flex-row md:items-end">
             <div className="flex-1">
-              <label htmlFor="sessionName" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="sessionName" className="mb-1 block text-xs font-black uppercase tracking-wide text-slate-500">
                 Game Name
               </label>
               <input
@@ -87,24 +89,24 @@ function TeacherDashboard() {
             <button
               onClick={() => createSessionMutation.mutate(sessionName.trim() || `Game ${new Date().toLocaleString()}`)}
               disabled={createSessionMutation.isPending}
-              className="btn-primary text-lg px-8 py-3"
+              className="btn-primary px-8 py-3 text-base"
             >
               {createSessionMutation.isPending ? 'Creating...' : '+ Create Game'}
             </button>
           </div>
-          <p className="mt-3 text-sm text-gray-500">
+          <p className="mt-3 text-sm font-semibold text-slate-500">
             After creation, you will be taken to the live session control room with shareable join code.
           </p>
         </div>
 
         {/* Recent Sessions */}
         <div className="card">
-          <h2 className="text-xl font-semibold mb-4">Recent Games</h2>
+          <h2 className="mb-4 text-xl font-black uppercase tracking-tight text-primary-700">Recent Games</h2>
 
           {isLoading ? (
-            <p className="text-gray-500">Loading...</p>
+            <p className="font-semibold text-slate-500">Loading...</p>
           ) : recentSessions?.length === 0 ? (
-            <p className="text-gray-500">No games yet. Create your first one!</p>
+            <p className="font-semibold text-slate-500">No games yet. Create your first one!</p>
           ) : (
             <div className="divide-y">
               {recentSessions?.map((session: any) => (
@@ -148,17 +150,17 @@ function TeacherDashboard() {
 
         {/* Quick Links */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link to="/teacher/questions" className="card hover:shadow-xl transition-shadow">
-            <h3 className="font-semibold">📚 Question Bank</h3>
-            <p className="text-sm text-gray-500 mt-1">Manage your questions</p>
+          <Link to="/teacher/questions" className="card transition-transform hover:-translate-y-0.5">
+            <h3 className="font-black uppercase tracking-tight text-primary-700">📚 Question Bank</h3>
+            <p className="mt-1 text-sm font-semibold text-slate-500">Manage your questions</p>
           </Link>
           <div className="card opacity-50">
-            <h3 className="font-semibold">📊 Analytics</h3>
-            <p className="text-sm text-gray-500 mt-1">Coming soon</p>
+            <h3 className="font-black uppercase tracking-tight text-primary-700">📊 Analytics</h3>
+            <p className="mt-1 text-sm font-semibold text-slate-500">Coming soon</p>
           </div>
           <div className="card opacity-50">
-            <h3 className="font-semibold">⚙️ Settings</h3>
-            <p className="text-sm text-gray-500 mt-1">Coming soon</p>
+            <h3 className="font-black uppercase tracking-tight text-primary-700">⚙️ Settings</h3>
+            <p className="mt-1 text-sm font-semibold text-slate-500">Coming soon</p>
           </div>
         </div>
       </main>
