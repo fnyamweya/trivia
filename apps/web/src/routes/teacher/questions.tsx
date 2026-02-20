@@ -17,7 +17,7 @@ function QuestionsPage() {
     queryKey: ['questions'],
     queryFn: async () => {
       const res = await api.get('/questions');
-      return res.data;
+      return res.data.data;
     },
     enabled: !!user && user.role === 'teacher',
   });
@@ -26,9 +26,18 @@ function QuestionsPage() {
     queryKey: ['topics'],
     queryFn: async () => {
       const res = await api.get('/topics');
-      return res.data;
+      return res.data.data;
     },
     enabled: !!user && user.role === 'teacher',
+  });
+
+  const publishMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.post(`/questions/${id}/publish`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['questions'] });
+    },
   });
 
   const deleteMutation = useMutation({
@@ -59,7 +68,7 @@ function QuestionsPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Question Bank</h1>
             <p className="text-sm text-gray-500">
-              {questions?.items?.length ?? 0} questions
+              {questions?.length ?? 0} questions
             </p>
           </div>
           <div className="flex gap-4">
@@ -81,7 +90,7 @@ function QuestionsPage() {
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto" />
           </div>
-        ) : questions?.items?.length === 0 ? (
+        ) : questions?.length === 0 ? (
           <div className="card text-center py-12">
             <p className="text-gray-500 mb-4">No questions yet</p>
             <button
@@ -93,13 +102,13 @@ function QuestionsPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {questions?.items?.map((question: any) => (
+            {questions?.map((question: any) => (
               <div key={question.id} className="card">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <h3 className="font-medium text-lg">{question.stem}</h3>
+                    <h3 className="font-medium text-lg">{question.text}</h3>
                     <div className="mt-2 grid grid-cols-2 gap-2">
-                      {question.choices.map((choice: any, i: number) => (
+                      {question.answers.map((choice: any, i: number) => (
                         <div
                           key={choice.id}
                           className={`p-2 rounded text-sm ${
@@ -113,6 +122,11 @@ function QuestionsPage() {
                       ))}
                     </div>
                     <div className="mt-3 flex gap-2">
+                      <span className={`px-2 py-0.5 rounded text-xs ${
+                        question.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                      }`}>
+                        {question.status}
+                      </span>
                       {question.tags?.map((tag: any) => (
                         <span
                           key={tag.id}
@@ -123,16 +137,27 @@ function QuestionsPage() {
                       ))}
                     </div>
                   </div>
-                  <button
-                    onClick={() => {
-                      if (confirm('Delete this question?')) {
-                        deleteMutation.mutate(question.id);
-                      }
-                    }}
-                    className="text-red-600 hover:text-red-800 text-sm ml-4"
-                  >
-                    Delete
-                  </button>
+                  <div className="ml-4 flex flex-col gap-2">
+                    {question.status !== 'published' && (
+                      <button
+                        onClick={() => publishMutation.mutate(question.id)}
+                        disabled={publishMutation.isPending}
+                        className="text-emerald-600 hover:text-emerald-800 text-sm"
+                      >
+                        Publish
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        if (confirm('Delete this question?')) {
+                          deleteMutation.mutate(question.id);
+                        }
+                      }}
+                      className="text-red-600 hover:text-red-800 text-sm"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -143,7 +168,7 @@ function QuestionsPage() {
       {/* Create Modal */}
       {showCreateModal && (
         <CreateQuestionModal
-          topics={topics?.items ?? []}
+          topics={topics ?? []}
           onClose={() => setShowCreateModal(false)}
           onCreated={() => {
             setShowCreateModal(false);
@@ -164,24 +189,46 @@ function CreateQuestionModal({
   onClose: () => void;
   onCreated: () => void;
 }) {
-  const [stem, setStem] = useState('');
+  const [text, setText] = useState('');
+  const [type, setType] = useState<'multiple_choice' | 'true_false'>('multiple_choice');
   const [choices, setChoices] = useState([
     { text: '', isCorrect: true },
     { text: '', isCorrect: false },
     { text: '', isCorrect: false },
     { text: '', isCorrect: false },
   ]);
+  const [explanation, setExplanation] = useState('');
+  const [timeLimitSeconds, setTimeLimitSeconds] = useState(30);
+  const [points, setPoints] = useState(10);
   const [topicId, setTopicId] = useState('');
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const res = await api.post('/questions', {
-        stem,
-        choices: choices.filter((c) => c.text.trim()),
+      const effectiveChoices =
+        type === 'true_false'
+          ? choices.slice(0, 2)
+          : choices.filter((choice) => choice.text.trim());
+
+      const payload = {
         topicId: topicId || undefined,
+        type,
         difficulty,
+        text: text.trim(),
+        answers: effectiveChoices.map((choice, index) => ({
+          id: String.fromCharCode(97 + index),
+          text: choice.text.trim(),
+          isCorrect: choice.isCorrect,
+        })),
+        explanation: explanation.trim() || undefined,
+        timeLimitMs: timeLimitSeconds * 1000,
+        points,
+      };
+
+      const res = await api.post('/questions', {
+        ...payload,
       });
       return res.data;
     },
@@ -189,7 +236,20 @@ function CreateQuestionModal({
       onCreated();
     },
     onError: (err: any) => {
-      setError(err.response?.data?.error?.message || 'Failed to create question');
+      const apiError = err.response?.data?.error;
+      const issues = apiError?.details?.issues as Array<{ path: string; message: string }> | undefined;
+
+      if (issues && issues.length > 0) {
+        const mapped = issues.reduce((acc, issue) => {
+          acc[issue.path] = issue.message;
+          return acc;
+        }, {} as Record<string, string>);
+        setFieldErrors(mapped);
+        setError('Please fix the validation errors below.');
+        return;
+      }
+
+      setError(apiError?.message || 'Failed to create question');
     },
   });
 
@@ -204,16 +264,60 @@ function CreateQuestionModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const validChoices = choices.filter((c) => c.text.trim());
-    if (validChoices.length < 2) {
-      setError('At least 2 choices required');
+    setError('');
+    setFieldErrors({});
+
+    const localErrors: Record<string, string> = {};
+    const effectiveChoices = type === 'true_false' ? choices.slice(0, 2) : choices.filter((c) => c.text.trim());
+
+    if (text.trim().length < 10) {
+      localErrors.text = 'Question text must be at least 10 characters.';
+    }
+
+    const choiceCount = effectiveChoices.filter((choice) => choice.text.trim()).length;
+    if (choiceCount < 2) {
+      localErrors.answers = 'At least 2 answer choices are required.';
+    }
+
+    if (type === 'true_false' && choiceCount !== 2) {
+      localErrors.answers = 'True/False questions must have exactly 2 answers.';
+    }
+
+    if (!effectiveChoices.some((c) => c.isCorrect)) {
+      localErrors.answers = 'Mark at least one answer as correct.';
+    }
+
+    if (timeLimitSeconds < 5 || timeLimitSeconds > 120) {
+      localErrors.timeLimitMs = 'Time limit must be between 5 and 120 seconds.';
+    }
+
+    if (points < 1 || points > 100) {
+      localErrors.points = 'Points must be between 1 and 100.';
+    }
+
+    if (Object.keys(localErrors).length > 0) {
+      setFieldErrors(localErrors);
+      setError('Please fix the validation errors below.');
       return;
     }
-    if (!validChoices.some((c) => c.isCorrect)) {
-      setError('Select the correct answer');
-      return;
-    }
+
     createMutation.mutate();
+  };
+
+  const handleTypeChange = (nextType: 'multiple_choice' | 'true_false') => {
+    setType(nextType);
+    if (nextType === 'true_false') {
+      setChoices([
+        { text: 'True', isCorrect: true },
+        { text: 'False', isCorrect: false },
+      ]);
+    } else if (choices.length < 4) {
+      setChoices([
+        ...choices,
+        { text: '', isCorrect: false },
+        { text: '', isCorrect: false },
+      ].slice(0, 4));
+    }
   };
 
   return (
@@ -226,12 +330,35 @@ function CreateQuestionModal({
             <div>
               <label className="block text-sm font-medium mb-1">Question</label>
               <textarea
-                value={stem}
-                onChange={(e) => setStem(e.target.value)}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
                 className="input min-h-[80px]"
                 placeholder="Enter your question..."
                 required
               />
+              {fieldErrors.text && <p className="mt-1 text-xs text-red-600">{fieldErrors.text}</p>}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Type</label>
+                <select value={type} onChange={(e) => handleTypeChange(e.target.value as 'multiple_choice' | 'true_false')} className="input">
+                  <option value="multiple_choice">Multiple Choice</option>
+                  <option value="true_false">True / False</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Difficulty</label>
+                <select
+                  value={difficulty}
+                  onChange={(e) => setDifficulty(e.target.value as 'easy' | 'medium' | 'hard')}
+                  className="input"
+                >
+                  <option value="easy">Easy</option>
+                  <option value="medium">Medium</option>
+                  <option value="hard">Hard</option>
+                </select>
+              </div>
             </div>
 
             <div>
@@ -239,7 +366,7 @@ function CreateQuestionModal({
                 Choices (click to mark correct)
               </label>
               <div className="space-y-2">
-                {choices.map((choice, i) => (
+                {(type === 'true_false' ? choices.slice(0, 2) : choices).map((choice, i) => (
                   <div key={i} className="flex gap-2">
                     <button
                       type="button"
@@ -262,13 +389,25 @@ function CreateQuestionModal({
                       }}
                       className="input flex-1"
                       placeholder={`Choice ${String.fromCharCode(65 + i)}`}
+                      disabled={type === 'true_false'}
                     />
                   </div>
                 ))}
               </div>
+              {fieldErrors.answers && <p className="mt-1 text-xs text-red-600">{fieldErrors.answers}</p>}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Explanation (optional)</label>
+              <textarea
+                value={explanation}
+                onChange={(e) => setExplanation(e.target.value)}
+                className="input min-h-[72px]"
+                placeholder="Explain why the correct answer is right..."
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Topic</label>
                 <select
@@ -285,16 +424,28 @@ function CreateQuestionModal({
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Difficulty</label>
-                <select
-                  value={difficulty}
-                  onChange={(e) => setDifficulty(e.target.value as any)}
+                <label className="block text-sm font-medium mb-1">Time (seconds)</label>
+                <input
+                  type="number"
+                  min={5}
+                  max={120}
+                  value={timeLimitSeconds}
+                  onChange={(e) => setTimeLimitSeconds(Number(e.target.value))}
                   className="input"
-                >
-                  <option value="easy">Easy</option>
-                  <option value="medium">Medium</option>
-                  <option value="hard">Hard</option>
-                </select>
+                />
+                {fieldErrors.timeLimitMs && <p className="mt-1 text-xs text-red-600">{fieldErrors.timeLimitMs}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Points</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={points}
+                  onChange={(e) => setPoints(Number(e.target.value))}
+                  className="input"
+                />
+                {fieldErrors.points && <p className="mt-1 text-xs text-red-600">{fieldErrors.points}</p>}
               </div>
             </div>
 

@@ -148,6 +148,102 @@ VALUES
         '00000000-0000-0000-0000-000000000002',
         strftime('%s', 'now') * 1000,
         strftime('%s', 'now') * 1000
+    ),
+    (
+        '00000000-0000-0000-0000-000000000106',
+        '00000000-0000-0000-0000-000000000001',
+        '00000000-0000-0000-0000-000000000010',
+        'multiple_choice',
+        'easy',
+        'published',
+        'What is 9 × 7?',
+        '[{"id":"a","text":"56","isCorrect":false},{"id":"b","text":"63","isCorrect":true},{"id":"c","text":"72","isCorrect":false},{"id":"d","text":"79","isCorrect":false}]',
+        '9 multiplied by 7 equals 63.',
+        25000,
+        10,
+        '00000000-0000-0000-0000-000000000002',
+        strftime('%s', 'now') * 1000,
+        strftime('%s', 'now') * 1000
+    ),
+    (
+        '00000000-0000-0000-0000-000000000107',
+        '00000000-0000-0000-0000-000000000001',
+        '00000000-0000-0000-0000-000000000011',
+        'true_false',
+        'medium',
+        'published',
+        'The human body has 206 bones.',
+        '[{"id":"true","text":"True","isCorrect":true},{"id":"false","text":"False","isCorrect":false}]',
+        'An adult human skeleton has 206 bones.',
+        20000,
+        10,
+        '00000000-0000-0000-0000-000000000002',
+        strftime('%s', 'now') * 1000,
+        strftime('%s', 'now') * 1000
+    ),
+    (
+        '00000000-0000-0000-0000-000000000108',
+        '00000000-0000-0000-0000-000000000001',
+        '00000000-0000-0000-0000-000000000012',
+        'multiple_choice',
+        'medium',
+        'published',
+        'Who was the first President of the United States?',
+        '[{"id":"a","text":"Thomas Jefferson","isCorrect":false},{"id":"b","text":"George Washington","isCorrect":true},{"id":"c","text":"John Adams","isCorrect":false},{"id":"d","text":"James Madison","isCorrect":false}]',
+        'George Washington served as the first U.S. President.',
+        30000,
+        15,
+        '00000000-0000-0000-0000-000000000002',
+        strftime('%s', 'now') * 1000,
+        strftime('%s', 'now') * 1000
+    ),
+    (
+        '00000000-0000-0000-0000-000000000109',
+        '00000000-0000-0000-0000-000000000001',
+        '00000000-0000-0000-0000-000000000013',
+        'multiple_choice',
+        'medium',
+        'published',
+        'Which is the largest ocean on Earth?',
+        '[{"id":"a","text":"Atlantic Ocean","isCorrect":false},{"id":"b","text":"Indian Ocean","isCorrect":false},{"id":"c","text":"Arctic Ocean","isCorrect":false},{"id":"d","text":"Pacific Ocean","isCorrect":true}]',
+        'The Pacific Ocean is the largest and deepest ocean basin.',
+        30000,
+        15,
+        '00000000-0000-0000-0000-000000000002',
+        strftime('%s', 'now') * 1000,
+        strftime('%s', 'now') * 1000
+    ),
+    (
+        '00000000-0000-0000-0000-000000000110',
+        '00000000-0000-0000-0000-000000000001',
+        '00000000-0000-0000-0000-000000000010',
+        'multiple_choice',
+        'hard',
+        'published',
+        'What is the value of pi to two decimal places?',
+        '[{"id":"a","text":"3.12","isCorrect":false},{"id":"b","text":"3.14","isCorrect":true},{"id":"c","text":"3.16","isCorrect":false},{"id":"d","text":"3.18","isCorrect":false}]',
+        'Pi rounded to two decimal places is 3.14.',
+        25000,
+        20,
+        '00000000-0000-0000-0000-000000000002',
+        strftime('%s', 'now') * 1000,
+        strftime('%s', 'now') * 1000
+    ),
+    (
+        '00000000-0000-0000-0000-000000000111',
+        '00000000-0000-0000-0000-000000000001',
+        '00000000-0000-0000-0000-000000000011',
+        'multiple_choice',
+        'easy',
+        'published',
+        'Which gas do plants absorb from the atmosphere?',
+        '[{"id":"a","text":"Oxygen","isCorrect":false},{"id":"b","text":"Nitrogen","isCorrect":false},{"id":"c","text":"Carbon Dioxide","isCorrect":true},{"id":"d","text":"Hydrogen","isCorrect":false}]',
+        'Plants absorb carbon dioxide during photosynthesis.',
+        25000,
+        10,
+        '00000000-0000-0000-0000-000000000002',
+        strftime('%s', 'now') * 1000,
+        strftime('%s', 'now') * 1000
     );
 
 -- Link questions to tags
@@ -157,7 +253,11 @@ VALUES
     ('00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000000020'),
     ('00000000-0000-0000-0000-000000000102', '00000000-0000-0000-0000-000000000022'),
     ('00000000-0000-0000-0000-000000000103', '00000000-0000-0000-0000-000000000022'),
-    ('00000000-0000-0000-0000-000000000104', '00000000-0000-0000-0000-000000000024');
+    ('00000000-0000-0000-0000-000000000104', '00000000-0000-0000-0000-000000000024'),
+    ('00000000-0000-0000-0000-000000000106', '00000000-0000-0000-0000-000000000020'),
+    ('00000000-0000-0000-0000-000000000107', '00000000-0000-0000-0000-000000000023'),
+    ('00000000-0000-0000-0000-000000000108', '00000000-0000-0000-0000-000000000024'),
+    ('00000000-0000-0000-0000-000000000111', '00000000-0000-0000-0000-000000000023');
 
 -- Default ruleset
 INSERT OR IGNORE INTO rulesets (id, tenant_id, name, description, question_count, time_limit_ms_per_question, points_per_correct, created_at, updated_at)

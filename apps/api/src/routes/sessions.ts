@@ -441,18 +441,18 @@ sessionRoutes.post('/:id/start', requireAuth(['teacher', 'admin']), idempotencyM
       )
     : { question_count: 10 };
 
-  const questionCount = ruleset?.question_count ?? 10;
+  const requestedQuestionCount = ruleset?.question_count ?? 10;
 
   // Select random published questions
   const questions = await queryAll<{ id: string }>(
     c.env.DB,
     `SELECT id FROM questions WHERE tenant_id = ? AND status = 'published'
      ORDER BY RANDOM() LIMIT ?`,
-    [tenantId, questionCount]
+    [tenantId, requestedQuestionCount]
   );
 
-  if (questions.length < questionCount) {
-    throw ApiError.badRequest(`Not enough published questions. Need ${questionCount}, have ${questions.length}`);
+  if (questions.length === 0) {
+    throw ApiError.badRequest('No published questions available. Publish at least 1 question to start a session.');
   }
 
   const now = Date.now();
@@ -486,6 +486,8 @@ sessionRoutes.post('/:id/start', requireAuth(['teacher', 'admin']), idempotencyM
       sessionId,
       status: 'ready',
       totalQuestions: questions.length,
+      requestedQuestions: requestedQuestionCount,
+      adjustedQuestionCount: questions.length < requestedQuestionCount,
       startedAt: now,
     },
     requestId: c.get('requestId'),
