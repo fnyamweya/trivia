@@ -5,7 +5,10 @@ interface User {
   id: string;
   email?: string;
   displayName?: string;
-  role: 'teacher' | 'student';
+  role: 'admin' | 'teacher' | 'student';
+  avatarId?: string;
+  avatarEmoji?: string;
+  preferredMode?: 'team' | 'individual';
 }
 
 interface StudentSession {
@@ -19,8 +22,12 @@ interface AuthState {
   accessToken: string | null;
   studentSession: StudentSession | null;
 
-  setTeacherAuth: (data: { accessToken: string; user: { id: string; email: string; displayName: string } }) => void;
-  setStudentAuth: (data: { accessToken: string; session: { id: string; name: string; status: string }; student: { id: string; nickname: string } }) => void;
+  setTeacherAuth: (data: { accessToken: string; user: { id: string; email: string; displayName: string; role?: 'admin' | 'teacher' } }) => void;
+  setStudentAuth: (
+    data: { accessToken: string; session: { id: string; name: string; status: string }; student: { id: string; nickname: string } },
+    avatar?: { id: string; emoji: string },
+    preferredMode?: 'team' | 'individual'
+  ) => void;
   logout: () => void;
 }
 
@@ -37,7 +44,7 @@ export const useAuthStore = create<AuthState>()(
             id: data.user.id,
             email: data.user.email,
             displayName: data.user.displayName,
-            role: 'teacher',
+            role: data.user.role ?? 'teacher',
           },
           accessToken: data.accessToken,
           studentSession: null,
@@ -45,12 +52,15 @@ export const useAuthStore = create<AuthState>()(
         localStorage.setItem('accessToken', data.accessToken);
       },
 
-      setStudentAuth: (data) => {
+      setStudentAuth: (data, avatar, preferredMode = 'team') => {
         set({
           user: {
             id: data.student.id,
             displayName: data.student.nickname,
             role: 'student',
+            avatarId: avatar?.id,
+            avatarEmoji: avatar?.emoji,
+            preferredMode,
           },
           accessToken: data.accessToken,
           studentSession: {

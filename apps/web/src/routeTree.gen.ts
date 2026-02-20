@@ -14,7 +14,9 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as TeacherQuestionsRouteImport } from './routes/teacher/questions'
 import { Route as TeacherLoginRouteImport } from './routes/teacher/login'
 import { Route as TeacherDashboardRouteImport } from './routes/teacher/dashboard'
+import { Route as TeacherAdminRouteImport } from './routes/teacher/admin'
 import { Route as PlaySessionIdRouteImport } from './routes/play/$sessionId'
+import { Route as InviteTokenRouteImport } from './routes/invite/$token'
 import { Route as TeacherSessionSessionIdRouteImport } from './routes/teacher/session/$sessionId'
 import { Route as TeacherSessionSessionIdReportRouteImport } from './routes/teacher/session/$sessionId/report'
 
@@ -43,9 +45,19 @@ const TeacherDashboardRoute = TeacherDashboardRouteImport.update({
   path: '/teacher/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TeacherAdminRoute = TeacherAdminRouteImport.update({
+  id: '/teacher/admin',
+  path: '/teacher/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlaySessionIdRoute = PlaySessionIdRouteImport.update({
   id: '/play/$sessionId',
   path: '/play/$sessionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TeacherSessionSessionIdRoute = TeacherSessionSessionIdRouteImport.update({
@@ -63,7 +75,9 @@ const TeacherSessionSessionIdReportRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/join': typeof JoinRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/play/$sessionId': typeof PlaySessionIdRoute
+  '/teacher/admin': typeof TeacherAdminRoute
   '/teacher/dashboard': typeof TeacherDashboardRoute
   '/teacher/login': typeof TeacherLoginRoute
   '/teacher/questions': typeof TeacherQuestionsRoute
@@ -73,7 +87,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/join': typeof JoinRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/play/$sessionId': typeof PlaySessionIdRoute
+  '/teacher/admin': typeof TeacherAdminRoute
   '/teacher/dashboard': typeof TeacherDashboardRoute
   '/teacher/login': typeof TeacherLoginRoute
   '/teacher/questions': typeof TeacherQuestionsRoute
@@ -84,7 +100,9 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/join': typeof JoinRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/play/$sessionId': typeof PlaySessionIdRoute
+  '/teacher/admin': typeof TeacherAdminRoute
   '/teacher/dashboard': typeof TeacherDashboardRoute
   '/teacher/login': typeof TeacherLoginRoute
   '/teacher/questions': typeof TeacherQuestionsRoute
@@ -96,7 +114,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/join'
+    | '/invite/$token'
     | '/play/$sessionId'
+    | '/teacher/admin'
     | '/teacher/dashboard'
     | '/teacher/login'
     | '/teacher/questions'
@@ -106,7 +126,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/join'
+    | '/invite/$token'
     | '/play/$sessionId'
+    | '/teacher/admin'
     | '/teacher/dashboard'
     | '/teacher/login'
     | '/teacher/questions'
@@ -116,7 +138,9 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/join'
+    | '/invite/$token'
     | '/play/$sessionId'
+    | '/teacher/admin'
     | '/teacher/dashboard'
     | '/teacher/login'
     | '/teacher/questions'
@@ -127,7 +151,9 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   JoinRoute: typeof JoinRoute
+  InviteTokenRoute: typeof InviteTokenRoute
   PlaySessionIdRoute: typeof PlaySessionIdRoute
+  TeacherAdminRoute: typeof TeacherAdminRoute
   TeacherDashboardRoute: typeof TeacherDashboardRoute
   TeacherLoginRoute: typeof TeacherLoginRoute
   TeacherQuestionsRoute: typeof TeacherQuestionsRoute
@@ -171,11 +197,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TeacherDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/teacher/admin': {
+      id: '/teacher/admin'
+      path: '/teacher/admin'
+      fullPath: '/teacher/admin'
+      preLoaderRoute: typeof TeacherAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/play/$sessionId': {
       id: '/play/$sessionId'
       path: '/play/$sessionId'
       fullPath: '/play/$sessionId'
       preLoaderRoute: typeof PlaySessionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/teacher/session/$sessionId': {
@@ -212,7 +252,9 @@ const TeacherSessionSessionIdRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   JoinRoute: JoinRoute,
+  InviteTokenRoute: InviteTokenRoute,
   PlaySessionIdRoute: PlaySessionIdRoute,
+  TeacherAdminRoute: TeacherAdminRoute,
   TeacherDashboardRoute: TeacherDashboardRoute,
   TeacherLoginRoute: TeacherLoginRoute,
   TeacherQuestionsRoute: TeacherQuestionsRoute,

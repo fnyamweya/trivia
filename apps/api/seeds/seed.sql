@@ -24,6 +24,19 @@ VALUES (
     strftime('%s', 'now') * 1000
 );
 
+-- Demo admin (password: "password123" - bcrypt hash)
+INSERT OR IGNORE INTO users (id, tenant_id, email, display_name, password_hash, role, created_at, updated_at)
+VALUES (
+    '00000000-0000-0000-0000-000000000003',
+    '00000000-0000-0000-0000-000000000001',
+    'admin@demo.school',
+    'Demo Admin',
+    '$2b$10$/KOtt49Cx3hrvZKrbpqyB.opTodrsqIWfcTuUXXh7ta0cIhTCJShW',
+    'admin',
+    strftime('%s', 'now') * 1000,
+    strftime('%s', 'now') * 1000
+);
+
 -- Ensure teacher credentials are always corrected on reseed
 UPDATE users
 SET
@@ -33,13 +46,23 @@ SET
     updated_at = strftime('%s', 'now') * 1000
 WHERE email = 'teacher@demo.school';
 
+UPDATE users
+SET
+    password_hash = '$2b$10$/KOtt49Cx3hrvZKrbpqyB.opTodrsqIWfcTuUXXh7ta0cIhTCJShW',
+    display_name = 'Demo Admin',
+    role = 'admin',
+    updated_at = strftime('%s', 'now') * 1000
+WHERE email = 'admin@demo.school';
+
 -- Sample topics
 INSERT OR IGNORE INTO topics (id, tenant_id, name, description, color, created_at)
 VALUES 
     ('00000000-0000-0000-0000-000000000010', '00000000-0000-0000-0000-000000000001', 'Mathematics', 'Math questions', '#EF4444', strftime('%s', 'now') * 1000),
     ('00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000001', 'Science', 'Science questions', '#3B82F6', strftime('%s', 'now') * 1000),
     ('00000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000001', 'History', 'History questions', '#22C55E', strftime('%s', 'now') * 1000),
-    ('00000000-0000-0000-0000-000000000013', '00000000-0000-0000-0000-000000000001', 'Geography', 'Geography questions', '#F59E0B', strftime('%s', 'now') * 1000);
+    ('00000000-0000-0000-0000-000000000013', '00000000-0000-0000-0000-000000000001', 'Geography', 'Geography questions', '#F59E0B', strftime('%s', 'now') * 1000),
+    ('00000000-0000-0000-0000-000000000014', '00000000-0000-0000-0000-000000000001', 'Home Science', 'Food, nutrition, and daily life science', '#A855F7', strftime('%s', 'now') * 1000),
+    ('00000000-0000-0000-0000-000000000015', '00000000-0000-0000-0000-000000000001', 'English', 'Language and literacy questions', '#14B8A6', strftime('%s', 'now') * 1000);
 
 -- Sample tags
 INSERT OR IGNORE INTO tags (id, tenant_id, name, created_at)
@@ -269,6 +292,28 @@ VALUES (
     10,
     30000,
     10,
+    strftime('%s', 'now') * 1000,
+    strftime('%s', 'now') * 1000
+),
+(
+    '00000000-0000-0000-0000-000000000031',
+    '00000000-0000-0000-0000-000000000001',
+    'Beginner Level',
+    'Friendly mode for new students',
+    8,
+    35000,
+    8,
+    strftime('%s', 'now') * 1000,
+    strftime('%s', 'now') * 1000
+),
+(
+    '00000000-0000-0000-0000-000000000032',
+    '00000000-0000-0000-0000-000000000001',
+    'Advanced Level',
+    'Fast-paced challenge mode',
+    12,
+    20000,
+    15,
     strftime('%s', 'now') * 1000,
     strftime('%s', 'now') * 1000
 );

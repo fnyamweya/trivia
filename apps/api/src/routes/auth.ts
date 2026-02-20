@@ -9,12 +9,13 @@ import {
   type TeacherLoginInput,
   type StudentJoinInput,
 } from '@trivia/shared';
+import { z } from 'zod';
 import type { Env, Variables } from '../types/env.js';
 import { generateAccessToken } from '../auth/jwt.js';
 import { queryOne, execute } from '../db/helpers.js';
 import { ApiError } from '../observability/error-handler.js';
 import { createRateLimiter } from '../auth/rate-limiter.js';
-import { verifyPassword } from '../auth/password.js';
+import { hashPassword, verifyPassword } from '../auth/password.js';
 
 export const authRoutes = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -43,6 +44,27 @@ interface StudentRow {
   session_id: string;
   team_id: string | null;
   nickname: string;
+}
+
+interface TeacherInviteRow {
+  id: string;
+  tenant_id: string;
+  email: string;
+  display_name: string | null;
+  role: 'teacher' | 'admin';
+  status: 'pending' | 'accepted' | 'expired' | 'revoked';
+  expires_at: number;
+}
+
+const teacherAcceptInviteSchema = z.object({
+  token: z.string().min(16),
+  displayName: z.string().min(2).max(120),
+  password: z.string().min(8).max(100),
+});
+
+async function hashToken(rawToken: string): Promise<string> {
+  const buffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(rawToken));
+  return Array.from(new Uint8Array(buffer)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 /**
@@ -108,6 +130,101 @@ authRoutes.post('/teacher/login', authRateLimiter, async (c) => {
     },
     requestId: c.get('requestId'),
   });
+});
+
+/**
+ * POST /v1/auth/teacher/accept-invite
+ * Accept an admin invite and create or activate teacher account.
+ */
+authRoutes.post('/teacher/accept-invite', authRateLimiter, async (c) => {
+  const body = await c.req.json();
+  const input = teacherAcceptInviteSchema.parse(body);
+  const now = Date.now();
+  const tokenHash = await hashToken(input.token);
+
+  const invite = await queryOne<TeacherInviteRow>(
+    c.env.DB,
+    `SELECT id, tenant_id, email, display_name, role, status, expires_at
+     FROM teacher_invites
+     WHERE token_hash = ?`,
+    [tokenHash]
+  );
+
+  if (!invite) {
+    throw ApiError.badRequest('Invalid invite token');
+  }
+
+  if (invite.status !== 'pending') {
+    throw ApiError.badRequest(`Invite is ${invite.status}`);
+  }
+
+  if (invite.expires_at < now) {
+    await execute(
+      c.env.DB,
+      `UPDATE teacher_invites SET status = 'expired', updated_at = ? WHERE id = ?`,
+      [now, invite.id]
+    );
+    throw ApiError.badRequest('Invite has expired');
+  }
+
+  const passwordHash = await hashPassword(input.password);
+
+  const existingUser = await queryOne<UserRow>(
+    c.env.DB,
+    `SELECT id, tenant_id, email, display_name, password_hash, role
+     FROM users WHERE tenant_id = ? AND email = ?`,
+    [invite.tenant_id, invite.email]
+  );
+
+  let userId: string;
+
+  if (existingUser) {
+    userId = existingUser.id;
+    await execute(
+      c.env.DB,
+      `UPDATE users
+       SET display_name = ?, password_hash = ?, role = 'teacher', updated_at = ?
+       WHERE id = ?`,
+      [input.displayName, passwordHash, now, userId]
+    );
+  } else {
+    userId = crypto.randomUUID();
+    await execute(
+      c.env.DB,
+      `INSERT INTO users (id, tenant_id, email, display_name, password_hash, role, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 'teacher', ?, ?)`,
+      [userId, invite.tenant_id, invite.email, input.displayName, passwordHash, now, now]
+    );
+  }
+
+  await execute(
+    c.env.DB,
+    `UPDATE teacher_invites
+     SET status = 'accepted', accepted_at = ?, accepted_user_id = ?, updated_at = ?
+     WHERE id = ?`,
+    [now, userId, now, invite.id]
+  );
+
+  const accessToken = await generateAccessToken(c.env, {
+    sub: userId,
+    tenantId: invite.tenant_id,
+    role: 'teacher',
+  });
+
+  return c.json({
+    success: true,
+    data: {
+      accessToken,
+      expiresIn: 3600,
+      user: {
+        id: userId,
+        email: invite.email,
+        displayName: input.displayName,
+        role: 'teacher',
+      },
+    },
+    requestId: c.get('requestId'),
+  }, 201);
 });
 
 /**

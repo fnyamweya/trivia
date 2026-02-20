@@ -32,7 +32,7 @@ function QuestionsPage() {
       const res = await api.get('/questions');
       return res.data.data;
     },
-    enabled: !!user && user.role === 'teacher',
+    enabled: !!user && (user.role === 'teacher' || user.role === 'admin'),
   });
 
   const { data: topics } = useQuery({
@@ -41,7 +41,16 @@ function QuestionsPage() {
       const res = await api.get('/topics');
       return res.data.data;
     },
-    enabled: !!user && user.role === 'teacher',
+    enabled: !!user && (user.role === 'teacher' || user.role === 'admin'),
+  });
+
+  const { data: levels } = useQuery({
+    queryKey: ['levels'],
+    queryFn: async () => {
+      const res = await api.get('/levels');
+      return res.data.data;
+    },
+    enabled: !!user && (user.role === 'teacher' || user.role === 'admin'),
   });
 
   const publishMutation = useMutation({
@@ -63,7 +72,7 @@ function QuestionsPage() {
   });
 
   // Redirect if not logged in
-  if (!user || user.role !== 'teacher') {
+  if (!user || (user.role !== 'teacher' && user.role !== 'admin')) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Link to="/teacher/login" className="btn-primary">
@@ -182,6 +191,7 @@ function QuestionsPage() {
       {showCreateModal && (
         <CreateQuestionModal
           topics={topics ?? []}
+          levels={levels ?? []}
           onClose={() => setShowCreateModal(false)}
           onCreated={() => {
             setShowCreateModal(false);
@@ -204,13 +214,16 @@ function QuestionsPage() {
 
 function CreateQuestionModal({
   topics,
+  levels,
   onClose,
   onCreated,
 }: {
   topics: any[];
+  levels: any[];
   onClose: () => void;
   onCreated: () => void;
 }) {
+  const queryClient = useQueryClient();
   const [text, setText] = useState('');
   const [type, setType] = useState<'multiple_choice' | 'true_false'>('multiple_choice');
   const [choices, setChoices] = useState([
@@ -223,9 +236,29 @@ function CreateQuestionModal({
   const [timeLimitSeconds, setTimeLimitSeconds] = useState(30);
   const [points, setPoints] = useState(10);
   const [topicId, setTopicId] = useState('');
+  const [newTopicName, setNewTopicName] = useState('');
+  const [selectedLevelId, setSelectedLevelId] = useState('');
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const createTopicMutation = useMutation({
+    mutationFn: async (name: string) => {
+      const colorPool = ['#EF4444', '#3B82F6', '#22C55E', '#F59E0B', '#A855F7'];
+      const randomColor = colorPool[Math.floor(Math.random() * colorPool.length)];
+      const res = await api.post('/topics', {
+        name,
+        description: `${name} subject component`,
+        color: randomColor,
+      });
+      return res.data.data;
+    },
+    onSuccess: (topic) => {
+      setTopicId(topic.id);
+      setNewTopicName('');
+      queryClient.invalidateQueries({ queryKey: ['topics'] });
+    },
+  });
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -342,6 +375,27 @@ function CreateQuestionModal({
     }
   };
 
+  const handleApplyLevel = (levelId: string) => {
+    setSelectedLevelId(levelId);
+    const level = levels.find((item: any) => item.id === levelId);
+    if (!level) {
+      return;
+    }
+
+    setTimeLimitSeconds(Math.round((level.timeLimitMsPerQuestion ?? 30000) / 1000));
+    setPoints(level.pointsPerCorrect ?? 10);
+
+    const suggestedDifficulty: 'easy' | 'medium' | 'hard' =
+      (level.pointsPerCorrect ?? 10) >= 18
+        ? 'hard'
+        : (level.pointsPerCorrect ?? 10) >= 13
+          ? 'medium'
+          : 'easy';
+    setDifficulty(suggestedDifficulty);
+  };
+
+  const subjectSuggestions = ['Science', 'Home Science', 'Mathematics', 'History', 'Geography', 'English'];
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -361,12 +415,27 @@ function CreateQuestionModal({
               {fieldErrors.text && <p className="mt-1 text-xs text-red-600">{fieldErrors.text}</p>}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div>
                 <label className="block text-sm font-medium mb-1">Type</label>
                 <select value={type} onChange={(e) => handleTypeChange(e.target.value as 'multiple_choice' | 'true_false')} className="input">
                   <option value="multiple_choice">Multiple Choice</option>
                   <option value="true_false">True / False</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Level Preset</label>
+                <select
+                  value={selectedLevelId}
+                  onChange={(e) => handleApplyLevel(e.target.value)}
+                  className="input"
+                >
+                  <option value="">No preset</option>
+                  {levels.map((level: any) => (
+                    <option key={level.id} value={level.id}>
+                      {level.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -431,7 +500,7 @@ function CreateQuestionModal({
 
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Topic</label>
+                <label className="block text-sm font-medium mb-1">Subject / Component</label>
                 <select
                   value={topicId}
                   onChange={(e) => setTopicId(e.target.value)}
@@ -444,6 +513,40 @@ function CreateQuestionModal({
                     </option>
                   ))}
                 </select>
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {subjectSuggestions.map((subject) => (
+                    <button
+                      key={subject}
+                      type="button"
+                      onClick={() => setNewTopicName(subject)}
+                      className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-slate-600"
+                    >
+                      {subject}
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-2 flex gap-2">
+                  <input
+                    type="text"
+                    value={newTopicName}
+                    onChange={(e) => setNewTopicName(e.target.value)}
+                    placeholder="Add new subject"
+                    className="input h-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const name = newTopicName.trim();
+                      if (name.length > 0) {
+                        createTopicMutation.mutate(name);
+                      }
+                    }}
+                    disabled={createTopicMutation.isPending || newTopicName.trim().length === 0}
+                    className="btn-secondary h-10 px-3 py-2 text-xs"
+                  >
+                    {createTopicMutation.isPending ? 'Adding...' : 'Add'}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Time (seconds)</label>

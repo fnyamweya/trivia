@@ -58,3 +58,52 @@
     left: calc(var(--tug-position) * 1%);
   }
 }
+
+@keyframes tug-pull-left {
+  0%, 100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  50% {
+    transform: translateX(-4px) rotate(-6deg);
+  }
+}
+
+@keyframes tug-pull-right {
+  0%, 100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  50% {
+    transform: translateX(4px) rotate(6deg);
+  }
+}
+
+@keyframes rope-shake {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-0.5px);
+  }
+  50% {
+    transform: translateY(0.5px);
+  }
+  75% {
+    transform: translateY(-0.5px);
+  }
+}
+
+@layer utilities {
+  .tug-puller-left {
+    @apply inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/25 text-2xl shadow-md;
+    animation: tug-pull-left 0.8s ease-in-out infinite;
+  }
+
+  .tug-puller-right {
+    @apply inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/25 text-2xl shadow-md;
+    animation: tug-pull-right 0.8s ease-in-out infinite;
+  }
+
+  .tug-rope-shake {
+    animation: rope-shake 0.5s ease-in-out infinite;
+  }
+}

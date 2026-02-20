@@ -20,6 +20,8 @@ import { tagRoutes } from './routes/tags.js';
 import { topicRoutes } from './routes/topics.js';
 import { reportRoutes } from './routes/reports.js';
 import { healthRoutes } from './routes/health.js';
+import { levelRoutes } from './routes/levels.js';
+import { adminRoutes } from './routes/admin.js';
 
 import { requestIdMiddleware, loggerMiddleware } from './observability/middleware.js';
 import { errorHandler } from './observability/error-handler.js';
@@ -104,6 +106,12 @@ api.route('/sessions', sessionRoutes);
 
 // Reports
 api.route('/reports', reportRoutes);
+
+// Levels (ruleset-backed presets)
+api.route('/levels', levelRoutes);
+
+// Admin settings + invites
+api.route('/admin', adminRoutes);
 
 // Mount API under /api/v1
 app.route('/api/v1', api);

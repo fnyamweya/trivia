@@ -16,7 +16,7 @@ function TeacherSessionPage() {
   const navigate = useNavigate();
   const { accessToken, user } = useAuthStore();
   const queryClient = useQueryClient();
-  const isAuthenticated = !!user && user.role === 'teacher';
+  const isAuthenticated = !!user && (user.role === 'teacher' || user.role === 'admin');
 
   const [wsState, setWsState] = useState<{
     position: number;

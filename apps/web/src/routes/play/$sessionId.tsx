@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useGameStore } from '@/stores/game';
 import { useAuthStore } from '@/stores/auth';
@@ -15,7 +15,8 @@ export const Route = createFileRoute('/play/$sessionId')({
 function PlayPage() {
   const { sessionId } = Route.useParams();
   const { accessToken, studentSession, user } = useAuthStore();
-  const { connect, disconnect, position, teams, phase, connectionStatus } = useGameStore();
+  const { connect, disconnect, position, teams, phase, connectionStatus, setSoloMode, joinTeam, myTeamId } = useGameStore();
+  const modeAppliedRef = useRef(false);
 
   useEffect(() => {
     if (accessToken) {
@@ -26,6 +27,25 @@ function PlayPage() {
       disconnect();
     };
   }, [sessionId, accessToken, connect, disconnect]);
+
+  useEffect(() => {
+    if (connectionStatus !== 'connected' || modeAppliedRef.current) {
+      return;
+    }
+
+    if (user?.role === 'student' && user.preferredMode === 'individual') {
+      setSoloMode(true);
+      modeAppliedRef.current = true;
+      return;
+    }
+
+    if (user?.role === 'student' && user.preferredMode === 'team' && !myTeamId && teams.length > 0) {
+      const leastPopulatedTeam = [...teams].sort((first, second) => first.members.length - second.members.length)[0];
+      joinTeam(leastPopulatedTeam.id);
+      modeAppliedRef.current = true;
+      return;
+    }
+  }, [connectionStatus, user, setSoloMode, teams, joinTeam, myTeamId]);
 
   if (!accessToken) {
     return (

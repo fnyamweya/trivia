@@ -1,4 +1,6 @@
 import type { Team } from '@trivia/shared';
+import { useAuthStore } from '@/stores/auth';
+import { getAvatarForNickname } from '@/lib/avatars';
 
 interface TugMeterProps {
   position: number; // 0-100, 50 = center
@@ -6,6 +8,7 @@ interface TugMeterProps {
 }
 
 export function TugMeter({ position, teams }: TugMeterProps) {
+  const { user } = useAuthStore();
   const leftTeam = teams.find((t) => t.side === 'left');
   const rightTeam = teams.find((t) => t.side === 'right');
 
@@ -13,8 +16,45 @@ export function TugMeter({ position, teams }: TugMeterProps) {
   const leftWinning = position < 20;
   const rightWinning = position > 80;
 
+  const getStudentAvatar = (student: { id: string; nickname: string }) => {
+    if (student.id === user?.id && user.avatarEmoji) {
+      return user.avatarEmoji;
+    }
+
+    return getAvatarForNickname(student.nickname).emoji;
+  };
+
+  const leftPullers = (leftTeam?.members ?? []).slice(0, 3);
+  const rightPullers = (rightTeam?.members ?? []).slice(0, 3);
+
   return (
     <div className="mx-auto w-full max-w-3xl">
+      <div className="mb-2 flex items-end justify-between px-2">
+        <div className="flex gap-1">
+          {leftPullers.length === 0 ? (
+            <span className="tug-puller-left">🧍</span>
+          ) : (
+            leftPullers.map((student) => (
+              <span key={student.id} className="tug-puller-left" title={student.nickname}>
+                {getStudentAvatar(student)}
+              </span>
+            ))
+          )}
+        </div>
+
+        <div className="flex gap-1">
+          {rightPullers.length === 0 ? (
+            <span className="tug-puller-right">🧍</span>
+          ) : (
+            rightPullers.map((student) => (
+              <span key={student.id} className="tug-puller-right" title={student.nickname}>
+                {getStudentAvatar(student)}
+              </span>
+            ))
+          )}
+        </div>
+      </div>
+
       {/* Team Labels */}
       <div className="flex justify-between mb-2">
         <div className={`flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 ${leftWinning ? 'scale-110' : ''} transition-transform`}>
@@ -42,7 +82,7 @@ export function TugMeter({ position, teams }: TugMeterProps) {
       </div>
 
       {/* The Meter */}
-      <div className="relative h-12 overflow-hidden rounded-2xl border-2 border-white/40 bg-[#0c2d63] shadow-xl">
+      <div className="relative h-12 overflow-hidden rounded-2xl border-2 border-white/40 bg-[#0c2d63] shadow-xl tug-rope-shake">
         {/* Gradient background showing team zones */}
         <div className="absolute inset-0 bg-gradient-to-r from-team-red/30 via-transparent to-team-blue/30" />
 

@@ -1,5 +1,6 @@
 import { useGameStore } from '@/stores/game';
 import { useAuthStore } from '@/stores/auth';
+import { getAvatarForNickname } from '@/lib/avatars';
 
 export function Lobby() {
   const { teams, students, phase, myTeamId, soloMode, joinTeam, setSoloMode } = useGameStore();
@@ -7,6 +8,14 @@ export function Lobby() {
 
   const myTeam = teams.find((team) => team.id === myTeamId);
   const unassignedStudents = students.filter((student) => !student.teamId);
+
+  const resolveAvatar = (student: { id: string; nickname: string }) => {
+    if (student.id === user?.id && user.avatarEmoji) {
+      return user.avatarEmoji;
+    }
+
+    return getAvatarForNickname(student.nickname).emoji;
+  };
 
   return (
     <div className="mx-auto max-w-3xl text-center">
@@ -33,6 +42,10 @@ export function Lobby() {
             Choose a team or play in <span className="font-black text-primary-600">Solo Mode</span>.
           </p>
         )}
+
+        <p className="mt-2 text-xs font-black uppercase tracking-wide text-primary-600">
+          Selected style: {user?.preferredMode === 'individual' ? 'Individual' : 'Team Game'}
+        </p>
 
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           {teams.map((team) => {
@@ -99,6 +112,7 @@ export function Lobby() {
                         student.id === user?.id ? 'font-bold' : ''
                       }`}
                     >
+                      <span className="text-lg leading-none">{resolveAvatar(student)}</span>
                       <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
                       {student.nickname}
                       {student.id === user?.id && (
@@ -120,6 +134,7 @@ export function Lobby() {
           <div className="flex flex-wrap justify-center gap-2">
             {unassignedStudents.map((student) => (
               <span key={student.id} className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm font-semibold text-slate-600">
+                <span className="mr-1">{resolveAvatar(student)}</span>
                 {student.nickname}
                 {student.id === user?.id ? ' (you)' : ''}
               </span>

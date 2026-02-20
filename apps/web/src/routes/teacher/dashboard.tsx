@@ -154,10 +154,17 @@ function TeacherDashboard() {
             <h3 className="font-black uppercase tracking-tight text-primary-700">📚 Question Bank</h3>
             <p className="mt-1 text-sm font-semibold text-slate-500">Manage your questions</p>
           </Link>
-          <div className="card opacity-50">
-            <h3 className="font-black uppercase tracking-tight text-primary-700">📊 Analytics</h3>
-            <p className="mt-1 text-sm font-semibold text-slate-500">Coming soon</p>
-          </div>
+          {user.role === 'admin' ? (
+            <Link to="/teacher/admin" className="card transition-transform hover:-translate-y-0.5">
+              <h3 className="font-black uppercase tracking-tight text-primary-700">🛠️ Admin Panel</h3>
+              <p className="mt-1 text-sm font-semibold text-slate-500">School settings and teacher invites</p>
+            </Link>
+          ) : (
+            <div className="card opacity-50">
+              <h3 className="font-black uppercase tracking-tight text-primary-700">📊 Analytics</h3>
+              <p className="mt-1 text-sm font-semibold text-slate-500">Coming soon</p>
+            </div>
+          )}
           <div className="card opacity-50">
             <h3 className="font-black uppercase tracking-tight text-primary-700">⚙️ Settings</h3>
             <p className="mt-1 text-sm font-semibold text-slate-500">Coming soon</p>
